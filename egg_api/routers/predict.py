@@ -3,6 +3,7 @@ Prediction Router Endpoint
 POST /predict-image: Accepts multipart cropped image file and returns prediction JSON.
 """
 
+import os
 import logging
 import PIL
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
@@ -17,8 +18,9 @@ router = APIRouter(tags=["Prediction"])
 # Maximum allowed upload size: 10 MB
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
-# Allowed MIME types for image upload
+# Allowed MIME types and extensions for image upload
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/bmp"}
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 
 
 @router.post(
@@ -32,18 +34,27 @@ async def predict_image(file: UploadFile = File(...)):
     Receives a cropped egg yolk image file via multipart/form-data,
     extracts RGB and CIELAB color features, and predicts the Yolk Color Fan score (1-15).
     """
-    # Validate content-type before reading the file
-    if file.content_type not in ALLOWED_CONTENT_TYPES:
+    # Validate content-type or filename extension
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    content_type = file.content_type or ""
+
+    is_valid_type = (
+        content_type in ALLOWED_CONTENT_TYPES
+        or ext in ALLOWED_EXTENSIONS
+        or content_type in ("application/octet-stream", "")
+    )
+    if not is_valid_type:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file type '{file.content_type}'. Allowed: jpeg, png, webp, bmp."
+            detail=f"Unsupported file type '{content_type}'. Allowed: jpeg, png, webp, bmp."
         )
 
     try:
-        # Read uploaded image bytes
-        image_bytes = await file.read()
+        # อ่านแค่ MAX_FILE_SIZE+1 bytes ก่อน — ถ้าใหญ่เกินจะรู้ทันที
+        # ป้องกัน OOM: ถ้าใช้ file.read() ธรรมดา server จะโหลดไฟล์ทั้งหมดเข้า RAM
+        # ก่อนถึง size check ทำให้ไฟล์ขนาด 500MB+ อาจ crash server ได้
+        image_bytes = await file.read(MAX_FILE_SIZE + 1)
 
-        # Guard against excessively large uploads (DoS prevention)
         if len(image_bytes) > MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,

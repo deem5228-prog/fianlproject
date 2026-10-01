@@ -14,12 +14,18 @@ class LocalPredictService {
   static double? _intercept;
   static List<double>? _dualCoef;
   static List<List<double>>? _supportVectors;
-  static bool _isLoaded = false;
 
-  /// Loads the mathematical model parameters from assets/model_weights.json
-  static Future<void> loadModel() async {
-    if (_isLoaded) return;
+  // ─── Race-condition fix ──────────────────────────────────────────────────
+  // ใช้ Future? แทน bool _isLoaded เพื่อให้ caller ทุกตัวที่เรียกพร้อมกัน
+  // รอ Future เดิม แทนที่จะโหลด JSON ซ้ำหลายรอบ
+  static Future<void>? _loadFuture;
 
+  /// Loads the mathematical model parameters from assets/model_weights.json.
+  /// Thread-safe: concurrent calls share a single Future instead of each
+  /// parsing the JSON independently.
+  static Future<void> loadModel() => _loadFuture ??= _doLoadModel();
+
+  static Future<void> _doLoadModel() async {
     final jsonString = await rootBundle.loadString('assets/model_weights.json');
     _weightsData = json.decode(jsonString) as Map<String, dynamic>;
 
@@ -38,8 +44,6 @@ class LocalPredictService {
     _supportVectors = (_weightsData!['support_vectors'] as List)
         .map((row) => (row as List).map((e) => (e as num).toDouble()).toList())
         .toList();
-
-    _isLoaded = true;
   }
 
   /// Converts an sRGB channel (0-255) to linear light for CIELAB
@@ -75,9 +79,10 @@ class LocalPredictService {
     final bLab = 200.0 * (fy - fz);
 
     return {
-      'l': double.parse(l.toStringAsFixed(2)),
-      'a': double.parse(a.toStringAsFixed(2)),
-      'b': double.parse(bLab.toStringAsFixed(2)),
+      // คืนค่า full precision — ห้าม round ตรงนี้เพราะค่าจะถูกส่งเข้า SVR ต่อ
+      'l': l,
+      'a': a,
+      'b': bLab,
     };
   }
 
@@ -135,9 +140,10 @@ class LocalPredictService {
     }
 
     return {
-      'r': double.parse((sumR / count).toStringAsFixed(2)),
-      'g': double.parse((sumG / count).toStringAsFixed(2)),
-      'b': double.parse((sumB / count).toStringAsFixed(2)),
+      // คืนค่า full precision — ห้าม round ตรงนี้เพราะค่าจะถูกส่งเข้า CIELAB + SVR ต่อ
+      'r': sumR / count,
+      'g': sumG / count,
+      'b': sumB / count,
     };
   }
 
@@ -191,11 +197,16 @@ class LocalPredictService {
     return PredictionResult(
       predictedScore: predictedScore,
       rawScore: double.parse(rawScore.toStringAsFixed(2)),
-      rgb: RGBColor(r: r, g: g, b: b),
+      // round เฉพาะตอน display — การคำนวณ SVR ข้างบนใช้ full precision ทั้งหมด
+      rgb: RGBColor(
+        r: double.parse(r.toStringAsFixed(2)),
+        g: double.parse(g.toStringAsFixed(2)),
+        b: double.parse(b.toStringAsFixed(2)),
+      ),
       cielab: CIELABColor(
-        l: l,
-        a: a,
-        b: bLab,
+        l: double.parse(l.toStringAsFixed(2)),
+        a: double.parse(a.toStringAsFixed(2)),
+        b: double.parse(bLab.toStringAsFixed(2)),
         chroma: double.parse(chroma.toStringAsFixed(2)),
         hueAngle: double.parse(hueAngle.toStringAsFixed(2)),
       ),

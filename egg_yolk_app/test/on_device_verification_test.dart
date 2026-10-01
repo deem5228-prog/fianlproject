@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:egg_yolk_app/services/auto_crop_service.dart';
 import 'package:egg_yolk_app/services/local_predict_service.dart';
+import 'package:egg_yolk_app/screens/splash_screen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -38,5 +40,32 @@ void main() {
     expect(result.predictedScore, inInclusiveRange(4, 15));
     expect(result.rawScore, greaterThan(10.0)); // Class 15 should have high score
     expect(result.rgb.r, greaterThan(100.0));
+  });
+
+  testWidgets('SplashScreen DSM scale strip renders 15 ColoredBoxes with height 8', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    await tester.pumpWidget(const MaterialApp(home: SplashScreen()));
+    await tester.pumpAndSettle();
+
+    final coloredBoxes = find.byType(ColoredBox);
+    expect(coloredBoxes, findsAtLeastNWidgets(15));
+
+    int validSegments = 0;
+    for (final element in coloredBoxes.evaluate()) {
+      final renderBox = element.renderObject as RenderBox?;
+      if (renderBox != null && renderBox.hasSize) {
+        if (renderBox.size.height == 8.0 && renderBox.size.width > 0) {
+          validSegments++;
+        }
+      }
+    }
+
+    expect(validSegments, equals(15));
+    expect(find.text('DSM Scale'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('15'), findsOneWidget);
   });
 }

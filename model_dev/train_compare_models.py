@@ -38,6 +38,18 @@ def evaluate_models():
             ('scaler', StandardScaler()),
             ('regressor', SVR(kernel='rbf', C=10.0, epsilon=0.1))
         ]),
+        'SVR (Linear)': Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', SVR(kernel='linear', C=10.0, epsilon=0.1))
+        ]),
+        'SVR (Poly deg 2)': Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', SVR(kernel='poly', degree=2, C=10.0, epsilon=0.1))
+        ]),
+        'SVR (Sigmoid)': Pipeline([
+            ('scaler', StandardScaler()),
+            ('regressor', SVR(kernel='sigmoid', C=10.0, epsilon=0.1))
+        ]),
         'Gradient Boosting': Pipeline([
             ('scaler', StandardScaler()),
             ('regressor', GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, random_state=42))

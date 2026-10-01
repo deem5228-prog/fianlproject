@@ -107,6 +107,5 @@ def extract_color_features(image_input):
         'a': lab['a'],
         'b_lab': lab['b'],
         'chroma': chroma,
-        'hue': hue,
-        'hue_angle': hue
+        'hue_angle': hue,   # ลบ 'hue' ซ้ำออก เหลือแค่ 'hue_angle' ที่ schema ใช้
     }

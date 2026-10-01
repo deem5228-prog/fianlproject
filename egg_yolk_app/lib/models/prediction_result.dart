@@ -55,7 +55,7 @@ class PredictionResult {
 
   factory PredictionResult.fromJson(Map<String, dynamic> json) {
     return PredictionResult(
-      predictedScore: json['predicted_score'] as int,
+      predictedScore: (json['predicted_score'] as num).toInt(),
       rawScore: (json['raw_score'] as num).toDouble(),
       rgb: RGBColor.fromJson(json['rgb'] as Map<String, dynamic>),
       cielab: CIELABColor.fromJson(json['cielab'] as Map<String, dynamic>),

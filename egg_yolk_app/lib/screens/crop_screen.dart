@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -15,11 +16,22 @@ class CropScreen extends StatefulWidget {
   State<CropScreen> createState() => _CropScreenState();
 }
 
-class _CropScreenState extends State<CropScreen> {
+class _CropScreenState extends State<CropScreen> with SingleTickerProviderStateMixin {
+  // ── Unified Design Token ──────────────────────────────────────────────
+  static const Color _amber = Color(0xFFE8A020);
+
   ui.Image? _decodedImage;
   bool _isProcessing = false;
   bool _isAutoDetecting = false;
   DetectedYolkBox? _detectedBox;
+
+  // Top Banner Notification Animation
+  late final AnimationController _bannerController;
+  late final Animation<Offset> _bannerSlideAnimation;
+  late final Animation<double> _bannerFadeAnimation;
+  Timer? _bannerTimer;
+  String _bannerMessage = '';
+  bool _bannerSuccess = true;
 
   // Circular Cropper state: Center (cx, cy) and radius (r)
   double _centerX = 150.0;
@@ -44,11 +56,32 @@ class _CropScreenState extends State<CropScreen> {
   @override
   void initState() {
     super.initState();
+    _bannerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+    );
+    _bannerSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, -1.8),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _bannerController,
+        curve: Curves.easeOutBack,
+        reverseCurve: Curves.easeInCubic,
+      ),
+    );
+    _bannerFadeAnimation = CurvedAnimation(
+      parent: _bannerController,
+      curve: Curves.easeOut,
+      reverseCurve: Curves.easeIn,
+    );
     _loadImage();
   }
 
   @override
   void dispose() {
+    _bannerTimer?.cancel();
+    _bannerController.dispose();
     _decodedImage?.dispose();
     super.dispose();
   }
@@ -117,17 +150,11 @@ class _CropScreenState extends State<CropScreen> {
           }
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              detected.isDetected
-                  ? '🎯 ตรวจจับและล็อกเป้าไข่แดงให้อัตโนมัติแล้ว'
-                  : '⚠️ ตรวจจับไม่ชัดเจน ใช้ตำแหน่งเดิม',
-              style: GoogleFonts.kanit(),
-            ),
-            duration: const Duration(seconds: 1),
-            backgroundColor: detected.isDetected ? const Color(0xFF10B981) : Colors.orange,
-          ),
+        _triggerTopNotification(
+          detected.isDetected
+              ? 'ตรวจจับและล็อกเป้าไข่แดงให้อัตโนมัติแล้ว'
+              : 'ตรวจจับไม่ชัดเจน ใช้ตำแหน่งเดิม',
+          isSuccess: detected.isDetected,
         );
       }
     } catch (_) {
@@ -137,6 +164,21 @@ class _CropScreenState extends State<CropScreen> {
         });
       }
     }
+  }
+
+  void _triggerTopNotification(String message, {bool isSuccess = true}) {
+    if (!mounted) return;
+    setState(() {
+      _bannerMessage = message;
+      _bannerSuccess = isSuccess;
+    });
+    _bannerController.forward(from: 0.0);
+    _bannerTimer?.cancel();
+    _bannerTimer = Timer(const Duration(milliseconds: 2400), () {
+      if (mounted) {
+        _bannerController.reverse();
+      }
+    });
   }
 
   Future<void> _confirmCrop() async {
@@ -230,10 +272,12 @@ class _CropScreenState extends State<CropScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF141414),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // 1. Top Bar matching Mockup (Back button + "ตรวจสอบตำแหน่ง" + "4 จุดรอบวงกลม")
-            _buildTopBar(),
+            Column(
+              children: [
+                // 1. Top Bar matching Mockup (Back button + "ตรวจสอบตำแหน่ง" + "4 จุดรอบวงกลม")
+                _buildTopBar(),
 
             // 2. Central Interactive Canvas Area
             Expanded(
@@ -312,7 +356,7 @@ class _CropScreenState extends State<CropScreen> {
                         )
                       else
                         const Center(
-                          child: CircularProgressIndicator(color: Color(0xFFFF9800)),
+                          child: CircularProgressIndicator(color: _amber),
                         ),
 
                       // Circle Cutout Mask & Crosshair Painter
@@ -432,6 +476,84 @@ class _CropScreenState extends State<CropScreen> {
             _buildBottomPanel(),
           ],
         ),
+
+        // 4. Elegant Sliding Top Notification Banner
+        _buildTopBannerNotification(),
+      ],
+    ),
+  ),
+);
+}
+
+  Widget _buildTopBannerNotification() {
+    return Positioned(
+      top: 14,
+      left: 16,
+      right: 16,
+      child: AnimatedBuilder(
+        animation: _bannerController,
+        builder: (context, child) {
+          if (_bannerController.value == 0.0) {
+            return const SizedBox.shrink();
+          }
+          return SlideTransition(
+            position: _bannerSlideAnimation,
+            child: FadeTransition(
+              opacity: _bannerFadeAnimation,
+              child: child,
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: _bannerSuccess
+                  ? const [Color(0xFF059669), Color(0xFF10B981)]
+                  : const [Color(0xFFD97706), Color(0xFFF59E0B)],
+            ),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x66000000),
+                blurRadius: 16,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                decoration: const BoxDecoration(
+                  color: Colors.white24,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _bannerSuccess ? Icons.check : Icons.priority_high,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  _bannerMessage,
+                  style: GoogleFonts.kanit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -542,7 +664,7 @@ class _CropScreenState extends State<CropScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFFFF9800), width: 2.5),
+              border: Border.all(color: _amber, width: 2.5),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x66000000),
@@ -609,7 +731,7 @@ class _CropScreenState extends State<CropScreen> {
                       backgroundColor: Colors.white,
                       side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     child: _isAutoDetecting
@@ -617,7 +739,7 @@ class _CropScreenState extends State<CropScreen> {
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                              color: Color(0xFFFF9800),
+                              color: _amber,
                               strokeWidth: 2,
                             ),
                           )
@@ -633,18 +755,18 @@ class _CropScreenState extends State<CropScreen> {
               ),
               const SizedBox(width: 14),
 
-              // Button 2: "ยืนยันตำแหน่ง" (Filled Vibrant Orange)
+              // Button 2: "ยืนยันตำแหน่ง" (Filled Amber)
               Expanded(
                 child: SizedBox(
                   height: 48,
                   child: ElevatedButton(
                     onPressed: _isProcessing ? null : _confirmCrop,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF9800),
+                      backgroundColor: _amber,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     child: _isProcessing
@@ -699,9 +821,9 @@ class _CircleMaskPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawPath(maskPath, darkPaint);
 
-    // 2. Circle Border (Warm Orange)
+    // 2. Circle Border (Warm Amber)
     final borderPaint = Paint()
-      ..color = const Color(0xFFFF9800)
+      ..color = const Color(0xFFE8A020)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
     canvas.drawCircle(Offset(centerX, centerY), radius, borderPaint);
@@ -725,9 +847,9 @@ class _CircleMaskPainter extends CustomPainter {
       dashedPaint,
     );
 
-    // 4. Center Crosshair '+' (Orange)
+    // 4. Center Crosshair '+' (Amber)
     final crossPaint = Paint()
-      ..color = const Color(0xFFFF9800)
+      ..color = const Color(0xFFE8A020)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 

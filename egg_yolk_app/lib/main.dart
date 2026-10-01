@@ -17,15 +17,15 @@ class EggYolkApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF141421),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFFFB8500),
-          secondary: Color(0xFFFFB703),
-          surface: Color(0xFF1E1E2C),
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFFAF5EB),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFE8A020),
+          primary: const Color(0xFFE8A020),
+          surface: const Color(0xFFFAF5EB),
         ),
         textTheme: GoogleFonts.kanitTextTheme(
-          ThemeData.dark().textTheme,
+          ThemeData.light().textTheme,
         ),
       ),
       home: const SplashScreen(),
