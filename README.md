@@ -4,20 +4,85 @@
 
 ---
 
-## 📁 โครงสร้างโปรเจกต์ทั้งหมด
+## 📁 โครงสร้างโปรเจกต์ทั้งหมด (File Tree)
 
 ```
 egg_yolk_final_project/
+├── README.md                          # เอกสารสรุปโครงงานและคู่มือการใช้งาน
+├── requirements.txt                   # ไลบรารี Python รวมของทั้งโปรเจกต์
+├── presentation.html                  # สไลด์นำเสนอผลงานวิจัย (HTML Interactive)
+├── ml_presentation_slides.html        # สไลด์ ML Pipeline ฉบับละเอียด
 │
-├── README.md                        ← ไฟล์นี้ (คู่มือและภาพรวมโปรเจกต์)
-├── requirements.txt                 ← รายการไลบรารี Python รวมของทั้งโปรเจกต์
-├── presentation.html                ← สไลด์นำเสนอผลงานวิจัย (HTML แบบ Interactive)
-├── ml_presentation_slides.html      ← สไลด์ ML Pipeline ฉบับโดยละเอียด (HTML)
+├── 🧠 model_dev/                      # กระบวนการพัฒนาโมเดล AI และ Data Pipeline
+│   ├── batch_auto_crop.py             # ขั้นตอนที่ 1: ตรวจจับและครอบตัดภาพไข่แดงทั้งชุดข้อมูลอัตโนมัติ
+│   ├── build_features.py              # ขั้นตอนที่ 2: สกัดค่าสี RGB และ CIELAB (Circular Mask 42%) บันทึกเป็น CSV
+│   ├── color_service.py               # โมดูลฟังก์ชันสำหรับการคำนวณสี HSV และ CIELAB (CIE D65)
+│   ├── compare_crop_experiments.py    # สคริปต์เปรียบเทียบผลการทดลอง Auto-Crop vs ภาพดั้งเดิม
+│   ├── train_compare_models.py        # ขั้นตอนที่ 3: แข่งขันและเปรียบเทียบโมเดล Machine Learning 6 อัลกอริทึม
+│   ├── export_best_model.py           # ขั้นตอนที่ 4: ส่งออกโมเดล SVR เป็น model_weights.json และ model.pkl
+│   │
+│   ├── test_hsv_equivalence.py        # ชุดทดสอบ A: ยืนยันความตรงกันของ HSV Mask กับ OpenCV 100%
+│   ├── test_lab_equivalence.py        # ชุดทดสอบ B: ยืนยันความตรงกันของ CIELAB กับ Scikit-image (diff < 0.01)
+│   ├── test_crop_consistency.py       # ชุดทดสอบ C: ยืนยันความแม่นยำของการครอปภาพจริง 5 ภาพ
+│   ├── test_score_comparison.py       # ชุดทดสอบ D: ยืนยันคะแนนทำนาย SVR ตรงกัน 20 ภาพ (diff < 0.1)
+│   │
+│   ├── generate_plots.py              # สร้างกราฟพื้นฐาน (Scatter, Residual)
+│   ├── generate_feature_plots.py      # สร้างกราฟความสัมพันธ์ค่าสีกับคะแนน DSM
+│   ├── generate_all_plots.py          # รันสร้างกราฟทุกประเภทพร้อมกัน
+│   ├── plot_detailed_tube_count.py    # กราฟการกระจายตัวของตัวอย่างในแต่ละช่วงคะแนน
+│   ├── plot_real_svr_visual.py        # กราฟแสดงการทำงานของ SVR ในมิติ 2D
+│   ├── plot_updated_svr_tube.py       # กราฟ SVR ฉบับอัปเดตพร้อม Decision Boundary
+│   ├── stats_inspect.py               # สำรวจสถิติข้อมูล (Distribution, Outlier, Correlation)
+│   │
+│   ├── data/                          # ชุดข้อมูลและตารางฟีเจอร์ (features.csv, crop_comparison_results.csv)
+│   ├── plots/                         # กราฟสรุปผลการวิจัย 12+ รูปภาพ สำหรับนำไปใส่เล่มรายงาน
+│   ├── model.pkl                      # โมเดล Scikit-Learn Pipeline ที่เทรนสมบูรณ์แล้ว
+│   ├── model_weights.json             # ค่าพารามิเตอร์คณิตศาสตร์ SVR สำหรับ Mobile App
+│   ├── models/
+│   │   └── best_model.joblib          # โมเดลในรูปแบบ Joblib (โหลดเร็วกว่า Pickle)
+│   ├── ml_presentation.html           # หน้าเว็บสไลด์นำเสนอผลงานวิจัยแบบ Interactive
+│   ├── ml_pipeline_tutorial.html      # คู่มือ ML Pipeline ในรูปแบบ HTML
+│   ├── ml_slides.html                 # สไลด์ ML อีกเวอร์ชันสำหรับใช้งานหลากหลาย
+│   ├── ML_PIPELINE_TUTORIAL.md        # คู่มืออธิบายหลักการทางคณิตศาสตร์อย่างละเอียด
+│   ├── README.md                      # คู่มือเฉพาะของโฟลเดอร์ model_dev
+│   └── requirements.txt               # ไลบรารี Python ที่จำเป็น (opencv, scikit-learn, scikit-image)
 │
-├── 🧠 model_dev/                    ← ส่วนวิจัย: เตรียมข้อมูล เทรน และส่งออกโมเดล AI
-├── 🌐 egg_api/                      ← ส่วน Backend: REST API สำหรับทำนายผลจากรูปภาพ
-└── 📱 egg_yolk_app/                 ← ส่วนแอป: Flutter App (100% Offline On-Device AI)
+├── 🌐 egg_api/                        # ระบบ Backend REST API (FastAPI) และเว็บแอปพลิเคชัน
+│   ├── main.py                        # จุดเริ่มต้นเซิร์ฟเวอร์ FastAPI พร้อม CORS & Swagger Docs
+│   ├── routers/
+│   │   └── predict.py                 # API Endpoint POST /api/predict ทำนายคะแนนจากรูปภาพ
+│   ├── schemas.py                     # โครงสร้าง Pydantic Data Model สำหรับ Request/Response
+│   ├── services/
+│   │   ├── color_service.py           # เซอร์วิสสกัดสี แปลง RGB → CIELAB และคำนวณ Chroma/Hue
+│   │   └── predict_service.py         # เซอร์วิสโหลด model.pkl และทำนายคะแนน DSM
+│   ├── web_app.html                   # เว็บแอปพลิเคชัน HTML5/JS สำหรับทดสอบทำนายผ่าน Browser
+│   └── requirements.txt               # ไลบรารี Python สำหรับรัน FastAPI Backend
+│
+└── 📱 egg_yolk_app/                   # แอปพลิเคชันมือถือ Flutter (100% On-Device AI)
+    ├── assets/
+    │   └── model_weights.json         # โมเดลสมองกล SVR 107 KB ฝังในตัวแอป
+    ├── lib/
+    │   ├── main.dart                  # จุดเริ่มต้นแอป ตั้งค่า Theme และเปิด SplashScreen
+    │   ├── models/
+    │   │   └── prediction_result.dart # คลาสเก็บผลลัพธ์ทำนาย (คะแนน, RGB, CIELAB)
+    │   ├── services/
+    │   │   ├── local_predict_service.dart  # On-Device AI: สกัดสี + คำนวณ SVR ในเครื่อง
+    │   │   ├── auto_crop_service.dart      # ค้นหาพิกัดไข่แดงอัตโนมัติ (Flood-Fill BFS)
+    │   │   └── api_service.dart            # ส่งรูปไปทำนายผ่าน FastAPI (โหมด Online)
+    │   └── screens/
+    │       ├── splash_screen.dart     # หน้าโหลด: แสดงโลโก้และโหลดโมเดล AI ล่วงหน้า
+    │       ├── home_screen.dart       # หน้าหลัก: ปุ่มถ่ายรูปและเลือกจากคลัง
+    │       ├── crop_screen.dart       # หน้าตีกรอบ: วงกลมสีส้ม + Auto Crop
+    │       ├── result_screen.dart     # หน้าผลลัพธ์: คะแนน DSM, RGB, CIELAB
+    │       └── detail_screen.dart     # หน้ารายละเอียด: ข้อมูลวิทยาศาสตร์เชิงลึก
+    ├── test/
+    │   ├── yolk_detector_test.dart         # ทดสอบ CIELAB และ AutoCrop Fallback
+    │   └── on_device_verification_test.dart # ยืนยันผล Dart ตรงกับ Python (diff < 0.1)
+    ├── pubspec.yaml                   # กำหนดค่าแอป Dependencies และ Assets
+    ├── pubspec.lock                   # ล็อคเวอร์ชัน Package (สร้างอัตโนมัติ)
+    └── README.md                      # คู่มือเฉพาะของ Flutter App
 ```
+
 
 ---
 
