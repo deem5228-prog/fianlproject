@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทเรียน: แอป Flutter ทำนายสีไข่แดง — สำหรับคนรู้ Python</title>
+<style>
+  :root {
+    --primary: #02A9F4;
+    --primary-light: rgba(2, 169, 244, 0.15);
+    --primary-dark: #01579B;
+    --orange: #FB8500;
+    --orange-light: rgba(251, 133, 0, 0.15);
+    --orange-dark: #FF9800;
+    --green: #059669;
+    --green-light: rgba(5, 150, 105, 0.15);
+    --red: #DC2626;
+    --red-light: rgba(220, 38, 38, 0.15);
+    --purple: #7C3AED;
+    --purple-light: rgba(124, 58, 237, 0.15);
+    --yellow: #FFC93C;
+    --gray-50: #0D1117;
+    --gray-100: #161B22;
+    --gray-200: #30363D;
+    --gray-300: #4B5563;
+    --gray-600: #8B949E;
+    --gray-700: #C9D1D9;
+    --gray-800: #E6EDF3;
+    --gray-900: #FFFFFF;
+    --code-bg: #1E1E2E;
+    --code-text: #CDD6F4;
+    --dart-bg: #0D2137;
+    --python-bg: #1A2332;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--gray-50); color: var(--gray-800); line-height: 1.8; }
+
+  .hero {
+    background: linear-gradient(135deg, #013D6B 0%, #01579B 40%, #0175C2 100%);
+    color: white; padding: 55px 40px; text-align: center; position: relative; overflow: hidden;
+  }
+  .hero::before { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle,rgba(255,255,255,0.06) 0%,transparent 70%); }
+  .hero h1 { font-size: 2.6em; margin-bottom: 10px; position: relative; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+  .hero .subtitle { font-size: 1.2em; opacity: 0.95; position: relative; max-width: 850px; margin: 0 auto; color: #E6EDF3; }
+  .hero .badge { display:inline-block; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); border-radius:30px; padding:6px 20px; margin-top:12px; font-size:0.92em; position:relative; }
+
+  .toc { max-width:1100px; margin:-30px auto 30px; background:var(--gray-100); border-radius:16px; padding:28px 35px; box-shadow:0 10px 40px rgba(0,0,0,0.3); position:relative; z-index:10; border:1px solid var(--gray-200); }
+  .toc h2 { font-size:1.4em; color:var(--primary); margin-bottom:12px; border-bottom:3px solid var(--primary-dark); padding-bottom:8px; }
+  .toc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:8px; }
+  .toc a { display:block; padding:9px 14px; color:var(--gray-700); text-decoration:none; border-radius:8px; transition:all 0.2s; border-left:3px solid transparent; font-size:0.93em; }
+  .toc a:hover { background:var(--gray-200); border-left-color:var(--primary); color:var(--primary); }
+  .toc a .num { display:inline-block; width:26px; height:26px; background:var(--primary-dark); color:white; border-radius:50%; text-align:center; line-height:26px; font-size:0.78em; margin-right:7px; font-weight:bold; }
+
+  .container { max-width:1100px; margin:0 auto; padding:0 20px 60px; }
+
+  .chapter { background:var(--gray-100); border-radius:16px; padding:32px 38px; margin-bottom:28px; box-shadow:0 2px 12px rgba(0,0,0,0.2); border:1px solid var(--gray-200); }
+  .chapter h2 { font-size:1.7em; color:var(--primary); margin-bottom:5px; padding-bottom:10px; border-bottom:3px solid var(--primary-dark); }
+  .chapter h3 { font-size:1.3em; color:var(--orange-dark); margin:22px 0 10px; padding-left:14px; border-left:4px solid var(--orange); }
+  .chapter h4 { font-size:1.05em; color:var(--gray-700); margin:16px 0 8px; }
+
+  .file-tag { display:inline-block; background:#1C2128; border:1px solid var(--gray-200); border-radius:6px; padding:2px 10px; font-family:'Consolas','Courier New',monospace; font-size:0.88em; color:var(--primary); font-weight:600; }
+
+  .info-box { border-radius:10px; padding:16px 20px; margin:14px 0; border-left:5px solid; font-size:0.93em; }
+  .info-box.concept { background:var(--primary-light); border-color:var(--primary); }
+  .info-box.tip { background:var(--green-light); border-color:var(--green); }
+  .info-box.warning { background:var(--red-light); border-color:var(--red); }
+  .info-box.note { background:var(--purple-light); border-color:var(--purple); }
+  .info-box.python { background:rgba(249, 168, 37, 0.15); border-color:#F9A825; }
+  .info-box .title { font-weight:bold; font-size:1.03em; margin-bottom:4px; }
+
+  .code-block { background:var(--code-bg); color:var(--code-text); border-radius:10px; padding:18px 22px; margin:14px 0; overflow-x:auto; font-family:'Consolas','Courier New',monospace; font-size:0.86em; line-height:1.7; position:relative; border:1px solid var(--gray-200); }
+  .code-block .lang { position:absolute; top:7px; right:11px; background:rgba(255,255,255,0.1); color:#A6ACCD; padding:2px 10px; border-radius:4px; font-size:0.8em; }
+  .code-block .comment { color:#6C7086; font-style:italic; }
+  .code-block .keyword { color:#CBA6F7; }
+  .code-block .string { color:#A6E3A1; }
+  .code-block .func { color:#89B4FA; }
+  .code-block .number { color:#FAB387; }
+  .code-block .type { color:#F9E2AF; }
+  code { background:#1C2128; padding:2px 6px; border-radius:4px; font-family:'Consolas','Courier New',monospace; font-size:0.88em; color:var(--primary); border:1px solid var(--gray-200); }
+
+  /* Python vs Dart comparison */
+  .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
+  .compare-card { border-radius:10px; padding:0; overflow:hidden; border:1px solid var(--gray-200); }
+  .compare-card .header { padding:8px 14px; font-weight:bold; font-size:0.9em; color:white; }
+  .compare-card.python .header { background:#306998; }
+  .compare-card.dart .header { background:#01579B; }
+  .compare-card .body { padding:12px 14px; font-family:'Consolas','Courier New',monospace; font-size:0.82em; line-height:1.6; background:var(--code-bg); color:var(--code-text); min-height:60px; border-top:1px solid var(--gray-200); }
+
+  .flow-diagram { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px; padding:22px 12px; margin:14px 0; background:rgba(2, 169, 244, 0.05); border-radius:12px; border:1px solid var(--gray-200); }
+  .flow-step { background:var(--gray-100); border:2px solid var(--primary-dark); border-radius:10px; padding:10px 16px; text-align:center; font-weight:600; font-size:0.88em; min-width:120px; box-shadow:0 2px 8px rgba(0,0,0,0.3); color:var(--gray-800); }
+  .flow-step .icon { font-size:1.4em; display:block; margin-bottom:3px; }
+  .flow-step small { display:block; font-weight:400; color:var(--gray-600); font-size:0.82em; }
+  .flow-arrow { font-size:1.7em; color:var(--primary); font-weight:bold; }
+
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:0.9em; border:1px solid var(--gray-200); }
+  th { background:var(--primary-dark); color:white; padding:9px 13px; text-align:left; font-weight:600; border-bottom:1px solid var(--gray-200); }
+  td { padding:9px 13px; border-bottom:1px solid var(--gray-200); color:var(--gray-800); }
+  tr:nth-child(even) { background:var(--gray-100); }
+  tr:nth-child(odd) { background:#1C2128; }
+  tr:hover { background:#1F2A37; }
+
+  .screen-flow { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; padding:18px; margin:14px 0; background:rgba(251, 133, 0, 0.05); border-radius:12px; border:1px solid var(--gray-200); }
+  .screen-box { background:var(--gray-100); border:2px solid var(--orange-dark); border-radius:12px; padding:12px 16px; text-align:center; font-size:0.85em; min-width:100px; box-shadow:0 2px 6px rgba(0,0,0,0.3); }
+  .screen-box .icon { font-size:1.6em; display:block; margin-bottom:2px; }
+  .screen-box strong { display:block; color:var(--orange); }
+  .screen-box small { color:var(--gray-600); font-size:0.85em; }
+
+  .formula-box { background:rgba(124, 58, 237, 0.05); border:2px solid #5B21B6; border-radius:12px; padding:18px 22px; margin:14px 0; text-align:center; }
+  .formula-box .formula { font-size:1.25em; font-weight:bold; color:#A78BFA; margin:8px 0; font-family:'Georgia',serif; }
+  .formula-box .desc { font-size:0.88em; color:var(--gray-600); }
+
+  .back-to-top { display:inline-block; margin-top:14px; color:var(--primary); text-decoration:none; font-size:0.88em; }
+  .back-to-top:hover { text-decoration:underline; color:#4fc3f7; }
+
+  .footer { text-align:center; padding:28px; color:var(--gray-600); font-size:0.88em; border-top:1px solid var(--gray-200); margin-top:20px; background:var(--gray-50); }
+
+  @media (max-width:768px) {
+    .hero h1 { font-size:1.7em; }
+    .chapter { padding:18px; }
+    .toc-grid { grid-template-columns:1fr; }
+    .compare-grid { grid-template-columns:1fr; }
+    .flow-diagram,.screen-flow { flex-direction:column; }
+    .flow-arrow { transform:rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>📱 บทเรียน: แอป Flutter ทำนายสีไข่แดง</h1>
+  <p class="subtitle">เรียนรู้โค้ด Dart/Flutter ทุกไฟล์ในโฟลเดอร์ <strong>egg_yolk_app/</strong><br>
+  อธิบายเปรียบเทียบกับ Python ให้เข้าใจง่าย สำหรับคนที่ไม่เคยเขียน Dart มาก่อน</p>
+  <div class="badge">📂 11 โค้ดหลัก + 2 ไฟล์เทส &nbsp;|&nbsp; 🐍 Python → 🎯 Dart &nbsp;|&nbsp; 📱 On-Device AI 100%</div>
+</div>
+
+<div class="toc" id="toc">
+  <h2>📑 สารบัญ</h2>
+  <div class="toc-grid">
+    <a href="#ch0"><span class="num">0</span> Dart vs Python — สิ่งที่ต้องรู้ก่อนเริ่ม</a>
+    <a href="#ch1"><span class="num">1</span> ภาพรวมแอป & pubspec.yaml</a>
+    <a href="#ch2"><span class="num">2</span> main.dart — จุดเริ่มต้นของแอป</a>
+    <a href="#ch3"><span class="num">3</span> prediction_result.dart — โมเดลข้อมูล</a>
+    <a href="#ch4"><span class="num">4</span> auto_crop_service.dart — ครอปอัตโนมัติ</a>
+    <a href="#ch5"><span class="num">5</span> local_predict_service.dart — สมองกล AI</a>
+    <a href="#ch6"><span class="num">6</span> api_service.dart — เชื่อมต่อเซิร์ฟเวอร์</a>
+    <a href="#ch7"><span class="num">7</span> splash_screen.dart — หน้าจอโหลด</a>
+    <a href="#ch8"><span class="num">8</span> home_screen.dart — หน้าหลัก</a>
+    <a href="#ch9"><span class="num">9</span> crop_screen.dart — ปรับแต่งกรอบ</a>
+    <a href="#ch10"><span class="num">10</span> result_screen.dart — แสดงผลลัพธ์</a>
+    <a href="#ch11"><span class="num">11</span> detail_screen.dart — ข้อมูลวิชาการ</a>
+    <a href="#ch12"><span class="num">12</span> Unit Tests — ตรวจสอบความถูกต้อง</a>
+    <a href="#ch13"><span class="num">13</span> สรุปบทเรียน</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== CHAPTER 0 ==================== -->
+<div class="chapter" id="ch0">
+  <h2>🐍➜🎯 บทที่ 0 — Dart vs Python สิ่งที่ต้องรู้ก่อนเริ่ม</h2>
+  <p>ก่อนอ่านโค้ด Dart มาดูกันก่อนว่า Dart แตกต่างจาก Python อย่างไร ถ้าคุณรู้ Python อยู่แล้ว คุณจะเข้าใจ Dart ได้เร็วมากครับ!</p>
+
+  <h3>0.1 ไวยากรณ์พื้นฐาน</h3>
+  <div class="compare-grid">
+    <div class="compare-card python">
+      <div class="header">🐍 Python</div>
+      <div class="body">
+<span class="comment"># ไม่ต้องประกาศ type</span>
+name = "Egg"
+score = 10
+pi = 3.14
+is_valid = True
+
+<span class="comment"># ฟังก์ชัน</span>
+def add(a, b):
+    return a + b
+
+<span class="comment"># พิมพ์</span>
+print(f"Score: {score}")
+      </div>
+    </div>
+    <div class="compare-card dart">
+      <div class="header">🎯 Dart</div>
+      <div class="body">
+<span class="comment">// ต้องประกาศ type (หรือใช้ var)</span>
+String name = "Egg";
+int score = 10;
+double pi = 3.14;
+bool isValid = true;
+
+<span class="comment">// ฟังก์ชัน (ต้องบอก return type)</span>
+int add(int a, int b) {
+  return a + b;
+}
+
+<span class="comment">// พิมพ์</span>
+print("Score: $score");
+      </div>
+    </div>
+  </div>
+
+  <h3>0.2 จุดแตกต่างสำคัญ</h3>
+  <table>
+    <tr><th>หัวข้อ</th><th>🐍 Python</th><th>🎯 Dart</th></tr>
+    <tr><td>จบบรรทัด</td><td>ไม่ต้องมีอะไร</td><td>ต้องมี <code>;</code> (เซมิโคลอน)</td></tr>
+    <tr><td>บล็อคโค้ด</td><td>ใช้ย่อหน้า (indent)</td><td>ใช้ปีกกา <code>{ }</code></td></tr>
+    <tr><td>ประเภทตัวแปร</td><td>ไม่ต้องบอก (Dynamic)</td><td>ต้องบอก type หรือใช้ <code>var</code></td></tr>
+    <tr><td>Null Safety</td><td>ไม่มี</td><td>มี! ใส่ <code>?</code> หลัง type เช่น <code>String?</code></td></tr>
+    <tr><td>List</td><td><code>[1, 2, 3]</code></td><td><code>[1, 2, 3]</code> (เหมือนกัน!)</td></tr>
+    <tr><td>Dictionary / Map</td><td><code>{'a': 1}</code></td><td><code>{'a': 1}</code> (เหมือนกัน!)</td></tr>
+    <tr><td>For Loop</td><td><code>for i in range(10):</code></td><td><code>for (int i = 0; i &lt; 10; i++)</code></td></tr>
+    <tr><td>Class</td><td><code>class Dog:</code></td><td><code>class Dog { }</code></td></tr>
+    <tr><td>Constructor</td><td><code>def __init__(self, name):</code></td><td><code>Dog(this.name);</code></td></tr>
+    <tr><td>Async</td><td><code>async def / await</code></td><td><code>Future&lt;void&gt; / async / await</code></td></tr>
+    <tr><td>Import</td><td><code>import pandas</code></td><td><code>import 'package:flutter/...';</code></td></tr>
+  </table>
+
+  <h3>0.3 Class เปรียบเทียบ</h3>
+  <div class="compare-grid">
+    <div class="compare-card python">
+      <div class="header">🐍 Python</div>
+      <div class="body">
+class Dog:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+    def bark(self):
+        print(f"{self.name} says Woof!")
+
+dog = Dog("Buddy", 3)
+dog.bark()
+      </div>
+    </div>
+    <div class="compare-card dart">
+      <div class="header">🎯 Dart</div>
+      <div class="body">
+class Dog {
+  final String name;
+  final int age;
+
+  Dog({required this.name, required this.age});
+
+  void bark() {
+    print("$name says Woof!");
+  }
+}
+
+final dog = Dog(name: "Buddy", age: 3);
+dog.bark();
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box tip">
+    <div class="title">💡 สรุปง่ายๆ</div>
+    Dart เหมือน Python ที่ต้อง <strong>เติม type + เซมิโคลอน + ปีกกา</strong> ถ้าคุณอ่าน Python ได้ คุณอ่าน Dart ได้แน่นอนครับ!
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 1 ==================== -->
+<div class="chapter" id="ch1">
+  <h2>📋 บทที่ 1 — ภาพรวมแอป & pubspec.yaml</h2>
+
+  <h3>1.1 Flow การทำงานของแอป</h3>
+  <div class="screen-flow">
+    <div class="screen-box"><span class="icon">🎨</span><strong>Splash</strong><small>หน้าโลโก้</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="screen-box"><span class="icon">🏠</span><strong>Home</strong><small>ถ่ายรูป/เลือกรูป</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="screen-box"><span class="icon">⭕</span><strong>Crop</strong><small>เล็งไข่แดง</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="screen-box"><span class="icon">🤖</span><strong>AI ทำนาย</strong><small>คำนวณบนมือถือ</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="screen-box"><span class="icon">🏆</span><strong>Result</strong><small>คะแนน 1-15</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="screen-box"><span class="icon">🔍</span><strong>Detail</strong><small>ค่าสีละเอียด</small></div>
+  </div>
+
+  <h3>1.2 pubspec.yaml — ไฟล์ตั้งค่าโปรเจกต์</h3>
+  <div class="info-box python">
+    <div class="title">🐍 เทียบกับ Python</div>
+    <code>pubspec.yaml</code> ใน Flutter เหมือนกับ <code>requirements.txt</code> + <code>setup.py</code> ใน Python — เป็นที่ระบุชื่อโปรเจกต์ เวอร์ชัน และแพ็กเกจที่ต้องติดตั้ง
+  </div>
+
+  <table>
+    <tr><th>แพ็กเกจ Dart</th><th>ทำอะไร</th><th>🐍 เทียบเท่า Python</th></tr>
+    <tr><td><code>image</code></td><td>อ่าน/จัดการพิกเซลของภาพ</td><td><code>Pillow (PIL)</code></td></tr>
+    <tr><td><code>image_picker</code></td><td>เปิดกล้องหรือเลือกรูปจากแกลเลอรี</td><td>ไม่มี (Python ไม่มี UI กล้อง)</td></tr>
+    <tr><td><code>http</code></td><td>ส่ง HTTP Request ไปเซิร์ฟเวอร์</td><td><code>requests</code></td></tr>
+    <tr><td><code>google_fonts</code></td><td>ใช้ฟอนต์สวยๆ (Kanit ภาษาไทย)</td><td>ไม่มี</td></tr>
+    <tr><td><code>flutter_spinkit</code></td><td>แอนิเมชันโหลดข้อมูล</td><td>ไม่มี</td></tr>
+    <tr><td><code>path_provider</code></td><td>หาที่เก็บไฟล์ชั่วคราวบนมือถือ</td><td><code>tempfile</code></td></tr>
+  </table>
+
+  <div class="code-block">
+    <span class="lang">YAML</span>
+<span class="comment"># assets = ไฟล์ที่จะฝังไว้ในแอป</span>
+flutter:
+  assets:
+    - assets/model_weights.json   <span class="comment"># ← สมองกล AI ขนาดเล็ก ถูกฝังไว้ตรงนี้!</span>
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 2 ==================== -->
+<div class="chapter" id="ch2">
+  <h2>🚀 บทที่ 2 — main.dart (จุดเริ่มต้นของแอป)</h2>
+  <p><span class="file-tag">lib/main.dart</span> เปรียบเสมือน <code>if __name__ == '__main__':</code> ใน Python — เป็นจุดที่โปรแกรมเริ่มทำงาน</p>
+
+  <div class="compare-grid">
+    <div class="compare-card python">
+      <div class="header">🐍 Python (จุดเริ่มต้น)</div>
+      <div class="body">
+if __name__ == '__main__':
+    app = create_app()
+    app.run()
+      </div>
+    </div>
+    <div class="compare-card dart">
+      <div class="header">🎯 Dart (จุดเริ่มต้น)</div>
+      <div class="body">
+void main() {
+  runApp(const EggYolkApp());
+}
+      </div>
+    </div>
+  </div>
+
+  <h3>2.1 สร้างแอปด้วย MaterialApp</h3>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="keyword">class</span> <span class="type">EggYolkApp</span> <span class="keyword">extends</span> <span class="type">StatelessWidget</span> {
+  @override
+  <span class="type">Widget</span> <span class="func">build</span>(<span class="type">BuildContext</span> context) {
+    <span class="keyword">return</span> <span class="type">MaterialApp</span>(
+      title: <span class="string">'Egg Yolk Color Predictor'</span>,
+      theme: <span class="type">ThemeData</span>(
+        brightness: <span class="type">Brightness</span>.dark,              <span class="comment">// โหมดมืด</span>
+        colorScheme: <span class="keyword">const</span> <span class="type">ColorScheme</span>.dark(
+          primary: <span class="type">Color</span>(<span class="number">0xFFFB8500</span>),          <span class="comment">// สีหลัก = สีส้มไข่แดง</span>
+        ),
+        textTheme: <span class="type">GoogleFonts</span>.kanitTextTheme(),  <span class="comment">// ฟอนต์ภาษาไทย</span>
+      ),
+      home: <span class="keyword">const</span> <span class="type">SplashScreen</span>(),                 <span class="comment">// หน้าแรก = SplashScreen</span>
+    );
+  }
+}
+  </div>
+
+  <div class="info-box concept">
+    <div class="title">🧩 Widget คืออะไร?</div>
+    ใน Flutter <strong>ทุกอย่างที่เห็นบนหน้าจอคือ Widget</strong> — ปุ่ม, ข้อความ, รูปภาพ, แม้แต่ช่องว่าง ก็เป็น Widget ทั้งหมด<br>
+    Widget จะซ้อนกันเป็นชั้นๆ เหมือน "กล่องซ้อนกล่อง" เรียกว่า <strong>Widget Tree</strong><br><br>
+    <strong>StatelessWidget</strong> = Widget ที่ไม่เปลี่ยนหน้าตา (แสดงผลคงที่)<br>
+    <strong>StatefulWidget</strong> = Widget ที่เปลี่ยนหน้าตาได้ (เช่น กดปุ่มแล้วโหลด → แสดงผลลัพธ์)
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 3 ==================== -->
+<div class="chapter" id="ch3">
+  <h2>📦 บทที่ 3 — prediction_result.dart (โมเดลข้อมูล)</h2>
+  <p><span class="file-tag">lib/models/prediction_result.dart</span> กำหนดโครงสร้างของ "ผลลัพธ์การทำนาย" — เหมือน <code>class</code> หรือ <code>dataclass</code> ใน Python</p>
+
+  <div class="compare-grid">
+    <div class="compare-card python">
+      <div class="header">🐍 Python (dataclass)</div>
+      <div class="body">
+from dataclasses import dataclass
+
+@dataclass
+class RGBColor:
+    r: float
+    g: float
+    b: float
+
+@dataclass
+class PredictionResult:
+    predicted_score: int
+    raw_score: float
+    rgb: RGBColor
+      </div>
+    </div>
+    <div class="compare-card dart">
+      <div class="header">🎯 Dart (class)</div>
+      <div class="body">
+class RGBColor {
+  final double r;
+  final double g;
+  final double b;
+
+  RGBColor({required this.r,
+            required this.g,
+            required this.b});
+}
+
+class PredictionResult {
+  final int predictedScore;
+  final double rawScore;
+  final RGBColor rgb;
+  ...
+}
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box concept">
+    <div class="title">📝 <code>final</code> คืออะไร?</div>
+    <code>final</code> ใน Dart หมายถึง "กำหนดค่าได้ครั้งเดียว แล้วห้ามเปลี่ยน" — คล้ายกับการไม่มี setter ใน Python property ครับ <br>
+    <code>required</code> หมายถึง "ต้องส่งค่านี้มาเสมอ ห้ามขาด" (ถ้าไม่ส่ง = Error ตอน compile!)
+  </div>
+
+  <h3>3.1 factory fromJson() — แปลง JSON เป็น Object</h3>
+  <div class="compare-grid">
+    <div class="compare-card python">
+      <div class="header">🐍 Python</div>
+      <div class="body">
+data = json.loads(response_text)
+result = PredictionResult(
+    predicted_score=int(data['predicted_score']),
+    raw_score=float(data['raw_score']),
+    rgb=RGBColor(**data['rgb']),
+)
+      </div>
+    </div>
+    <div class="compare-card dart">
+      <div class="header">🎯 Dart</div>
+      <div class="body">
+factory PredictionResult.fromJson(
+    Map&lt;String, dynamic&gt; json) {
+  return PredictionResult(
+    predictedScore: (json['predicted_score'] as num).toInt(),
+    rawScore: (json['raw_score'] as num).toDouble(),
+    rgb: RGBColor.fromJson(json['rgb']),
+  );
+}
+      </div>
+    </div>
+  </div>
+  <p><code>factory</code> เป็น constructor พิเศษใน Dart ที่สร้าง object จากข้อมูล ในที่นี้ใช้แปลง JSON (Map) ให้เป็น <code>PredictionResult</code> การใช้ <code>(json['predicted_score'] as num).toInt()</code> คือการป้องกันปัญหาเรื่องชนิดข้อมูลตัวเลขจาก API</p>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 4 ==================== -->
+<div class="chapter" id="ch4">
+  <h2>✂️ บทที่ 4 — auto_crop_service.dart (ครอปอัตโนมัติแบบเร็ว)</h2>
+  <p><span class="file-tag">lib/services/auto_crop_service.dart</span> เป็นเซอร์วิสที่ใช้ "ความเร็ว" เป็นหลัก ออกแบบมาให้ทำงานภายใน <strong>20 มิลลิวินาที</strong> เพื่อแสดงกรอบครอปทันทีที่เปิดภาพ</p>
+
+  <h3>4.1 เทคนิคเร่งความเร็วและ Algorithm</h3>
+  <table>
+    <tr><th>เทคนิค</th><th>คำอธิบาย</th></tr>
+    <tr><td>🔽 <strong>Downsample</strong></td><td>ย่อภาพเหลือ 240px ก่อนวิเคราะห์ (ภาพเต็มอาจ 4000px) ลดจำนวน pixel ที่ต้องสแกนลงมหาศาล!</td></tr>
+    <tr><td>🎨 <strong>HSV Color Segmentation</strong></td><td>ตรวจจับพื้นที่สีไข่แดงด้วยเงื่อนไข Hue: 5-55 องศา, Sat >= 0.25, Val >= 0.20</td></tr>
+    <tr><td>🔗 <strong>BFS Flood Fill</strong></td><td>ใช้ Connected Component Analysis หา Blob (กลุ่มสี) ที่ใหญ่ที่สุด (แทน regionprops ของ Python)</td></tr>
+    <tr><td>📐 <strong>Normalized Output</strong></td><td>ส่งผลเป็นสัดส่วน 0.0-1.0 เพื่อให้ใช้แสดงผลได้กับทุกขนาดหน้าจอโดยอัตโนมัติ</td></tr>
+  </table>
+
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="comment">// 1. ย่อภาพเหลือ 240px สำหรับการวิเคราะห์แบบเร็ว</span>
+<span class="keyword">const</span> targetDim = <span class="number">240</span>;
+<span class="keyword">final</span> codec = <span class="keyword">await</span> ui.instantiateImageCodec(bytes, targetWidth: targetDim);
+
+<span class="comment">// 2. BFS Flood Fill = เดินไปตามพิกเซลที่ติดกัน (เหมือน skimage.measure.label)</span>
+<span class="keyword">while</span> (queue.isNotEmpty) {
+  <span class="keyword">final</span> curr = queue.removeLast();
+  area++;
+  <span class="comment">// ตรวจ 4 ทิศ (บน ล่าง ซ้าย ขวา)</span>
+  <span class="keyword">for</span> (<span class="type">int</span> d = <span class="number">0</span>; d &lt; <span class="number">4</span>; d++) {
+    <span class="keyword">if</span> (mask[nidx] == <span class="number">1</span> && visited[nidx] == <span class="number">0</span>) {
+      visited[nidx] = <span class="number">1</span>;
+      queue.add(nidx);
+    }
+  }
+}
+  </div>
+
+  <div class="info-box python">
+    <div class="title">🐍 BFS Flood Fill คืออะไร?</div>
+    เหมือนใช้ "สีเมจิก" ระบายทีละจุด — เริ่มจากจุดหนึ่ง แล้วขยายไปยังจุดข้างเคียงที่มีค่าตรงตามเงื่อนไข ทำไปเรื่อยๆ จนไม่มีจุดใหม่ = ได้ Blob ครบ 1 ก้อน<br>
+    ใน Python ใช้ <code>skimage.measure.label(mask)</code> ได้เลย แต่ Dart ต้องเขียน algorithm เองครับ
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 5 ==================== -->
+<div class="chapter" id="ch5">
+  <h2>🧠 บทที่ 5 — local_predict_service.dart (สมองกล AI บนมือถือ)</h2>
+  <p><span class="file-tag">lib/services/local_predict_service.dart</span> คือ <strong>ไฟล์ที่สำคัญที่สุดของแอป!</strong> ทำหน้าที่แทน scikit-learn ทั้งหมดด้วยคณิตศาสตร์ล้วนๆ เพื่อคำนวณผลลัพธ์บนเครื่องโดยตรง</p>
+
+  <h3>5.1 โหลด model_weights.json — การใช้ Future เพื่อกัน Race Condition</h3>
+  <div class="compare-grid">
+    <div class="compare-card python">
+      <div class="header">🐍 Python (โหลดโมเดล)</div>
+      <div class="body">
+import joblib
+
+<span class="comment"># โหลดทั้ง Pipeline ทีเดียว</span>
+pipeline = joblib.load('model.pkl')
+result = pipeline.predict(X)
+      </div>
+    </div>
+    <div class="compare-card dart">
+      <div class="header">🎯 Dart (Singleton & Future)</div>
+      <div class="body">
+<span class="comment">// ใช้ Future? ป้องกันโหลดซ้ำ</span>
+static Future&lt;void&gt;? _loadFuture;
+
+static Future&lt;void&gt; loadModel() =>
+    _loadFuture ??= _doLoadModel();
+
+static Future&lt;void&gt; _doLoadModel() async {
+  final jsonString = await rootBundle
+      .loadString('assets/model_weights.json');
+  final data = json.decode(jsonString);
+  ...
+}
+      </div>
+    </div>
+  </div>
+
+  <h3>5.2 การสกัดค่าสีด้วย Circular Mask 42%</h3>
+  <p>เนื่องจากภาพถูกครอบตัด (Crop) มาแล้ว เราจะใช้วงกลมรัศมี 42% ตรงกลางภาพในการหาค่าสีเฉลี่ย เพื่อลดผลกระทบจากเงาและแสงสะท้อนขอบ</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="keyword">final</span> radius = (math.min(w, h) * <span class="number">0.42</span>).round();
+<span class="keyword">final</span> radiusSq = radius * radius;
+
+<span class="keyword">for</span> (<span class="type">int</span> y = <span class="number">0</span>; y &lt; h; y++) {
+  <span class="keyword">final</span> dy = y - cy;
+  <span class="keyword">for</span> (<span class="type">int</span> x = <span class="number">0</span>; x &lt; w; x++) {
+    <span class="keyword">final</span> dx = x - cx;
+    <span class="comment">// ถ้าพิกเซลอยู่ในวงกลม</span>
+    <span class="keyword">if</span> (dx * dx + dy * dy &lt;= radiusSq) {
+      <span class="comment">// รวมค่า RGB ...</span>
+    }
+  }
+}
+  </div>
+
+  <h3>5.3 แปลง RGB → CIELAB</h3>
+  <p>แปลงสเปซสีให้เหมือนกับการเรียก <code>skimage.color.rgb2lab()</code> ใน Python (เริ่มจาก Gamma correction → Linear RGB → XYZ (D65) → CIELAB)</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="keyword">static</span> Map&lt;<span class="type">String</span>, <span class="type">double</span>&gt; <span class="func">rgbToCielab</span>(<span class="type">double</span> r, <span class="type">double</span> g, <span class="type">double</span> b) {
+  <span class="comment">// sRGB to Linear</span>
+  <span class="keyword">final</span> rLin = _srgbToLinear(r);
+  <span class="comment">// Linear sRGB to XYZ (D65)</span>
+  <span class="keyword">final</span> x = (<span class="number">0.4124564</span> * rLin + ...) / <span class="number">0.95047</span>;
+  <span class="comment">// XYZ to CIELAB</span>
+  <span class="keyword">final</span> l = (<span class="number">116.0</span> * fy) - <span class="number">16.0</span>;
+  <span class="keyword">final</span> a = <span class="number">500.0</span> * (fx - fy);
+  <span class="keyword">final</span> bLab = <span class="number">200.0</span> * (fy - fz);
+  <span class="keyword">return</span> {<span class="string">'l'</span>: l, <span class="string">'a'</span>: a, <span class="string">'b'</span>: bLab};
+}
+  </div>
+
+  <h3>5.4 สูตร SVR (RBF Kernel) — ฟังก์ชัน predictImage()</h3>
+  <div class="flow-diagram">
+    <div class="flow-step"><span class="icon">📷</span>รับภาพครอป<small>File</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">⭕</span>Circular Mask<small>42% radius</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">🎨</span>RGB → LAB<small>สูตร CIE D65</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">📊</span>StandardScaler<small>ปรับสเกล</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">🧮</span>SVR Formula<small>RBF Kernel</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">🏆</span>คะแนน<small>1-15</small></div>
+  </div>
+
+  <div class="formula-box">
+    <div class="desc">สมการที่ Dart ใช้คำนวณ (เหมือนกับ Python ทุกประการ):</div>
+    <div class="formula">f(x) = Σᵢ αᵢ · exp(-γ · ‖x - svᵢ‖²) + b</div>
+    <div class="desc">วนลูปทุก Support Vector คำนวณ RBF Kernel แล้วรวมผล</div>
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="comment">// StandardScaler เหมือน sklearn</span>
+<span class="keyword">final</span> normFeatures = List&lt;<span class="type">double</span>&gt;.generate(<span class="number">6</span>, (i) {
+  <span class="keyword">return</span> (rawFeatures[i] - _scalerMean![i]) / _scalerScale![i];
+});
+
+<span class="comment">// Evaluate SVR Dual Formula with RBF Kernel</span>
+<span class="type">double</span> rawScore = _intercept!;
+<span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; numSVs; i++) {
+  <span class="keyword">final</span> sv = _supportVectors![i];
+  <span class="type">double</span> distSq = <span class="number">0.0</span>;
+  <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; <span class="number">6</span>; j++) {
+    <span class="keyword">final</span> diff = normFeatures[j] - sv[j];
+    distSq += diff * diff;
+  }
+  <span class="keyword">final</span> rbf = math.exp(-gamma * distSq);
+  rawScore += _dualCoef![i] * rbf;
+}
+<span class="comment">// ปัดเป็นจำนวนเต็ม และบังคับให้อยู่ในช่วง 1-15</span>
+<span class="keyword">final</span> predictedScore = rawScore.round().clamp(<span class="number">1</span>, <span class="number">15</span>);
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 6 ==================== -->
+<div class="chapter" id="ch6">
+  <h2>🌐 บทที่ 6 — api_service.dart (เชื่อมต่อเซิร์ฟเวอร์)</h2>
+  <p><span class="file-tag">lib/services/api_service.dart</span> เป็นตัวเลือกสำรอง — ส่งรูปไปให้ FastAPI ทำนายแทน (ต้องต่อเน็ต)</p>
+
+  <div class="compare-grid">
+    <div class="compare-card python">
+      <div class="header">🐍 Python (requests)</div>
+      <div class="body">
+import requests
+
+files = {'file': open('image.jpg', 'rb')}
+response = requests.post(
+    "http://10.0.2.2:8000/predict-image",
+    files=files
+)
+data = response.json()
+      </div>
+    </div>
+    <div class="compare-card dart">
+      <div class="header">🎯 Dart (http)</div>
+      <div class="body">
+final uri = Uri.parse('$baseUrl/predict-image');
+final request = http.MultipartRequest('POST', uri);
+
+request.files.add(
+  await http.MultipartFile.fromPath('file', file.path)
+);
+
+final streamed = await request.send();
+final response = await http.Response.fromStream(streamed);
+      </div>
+    </div>
+  </div>
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 7 ==================== -->
+<div class="chapter" id="ch7">
+  <h2>🎨 บทที่ 7 — หน้าจอ splash_screen.dart</h2>
+  <p><span class="file-tag">lib/screens/splash_screen.dart</span> คือหน้าแรกที่ผู้ใช้เห็น ออกแบบให้มี Yolk Logo สวยงาม และแสดง Mini DSM Scale</p>
+
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="comment">// Yolk Logo (ไข่ขาว + ไข่แดง)</span>
+Stack(
+  alignment: Alignment.center,
+  children: [
+    <span class="comment">// ไข่ขาว</span>
+    Container(
+      width: <span class="number">150</span>, height: <span class="number">150</span>,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+      ),
+    ),
+    <span class="comment">// ไข่แดง</span>
+    Container(
+      width: <span class="number">80</span>, height: <span class="number">80</span>,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: _amber,
+      ),
+    ),
+  ],
+)
+  </div>
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 8 ==================== -->
+<div class="chapter" id="ch8">
+  <h2>🏠 บทที่ 8 — หน้าจอ home_screen.dart</h2>
+  <p><span class="file-tag">lib/screens/home_screen.dart</span> เป็นหน้าหลักที่ให้ผู้ใช้เลือกภาพ และยังสามารถสลับระหว่างการใช้ Local AI หรือ Backend API ได้</p>
+
+  <h3>8.1 Design Tokens</h3>
+  <p>ในหน้าจอนี้มีการกำหนดสี Design Tokens ไว้อย่างชัดเจน:</p>
+  <ul>
+    <li><code>_amber</code>: <span style="color:#E8A020;">#E8A020</span> (สีหลัก)</li>
+    <li><code>_bg</code>: <span style="color:#FAF5EB; background-color:#333; padding:2px;">#FAF5EB</span> (พื้นหลัง)</li>
+    <li><code>_dark</code>: <span style="color:#1A1A1A;">#1A1A1A</span> (ตัวอักษร)</li>
+  </ul>
+
+  <h3>8.2 การทำนาย (_pickAndProcessImage)</h3>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="comment">// เลือกรูปจาก Gallery/Camera</span>
+<span class="keyword">final</span> XFile? pickedFile = <span class="keyword">await</span> _picker.pickImage(source: source);
+<span class="keyword">if</span> (pickedFile == <span class="keyword">null</span>) <span class="keyword">return</span>;
+
+<span class="comment">// ส่งไปหน้า CropScreen แล้วรอรับไฟล์ครอปกลับมา</span>
+<span class="keyword">final</span> File? croppedFile = <span class="keyword">await</span> Navigator.push&lt;File?&gt;(
+  context,
+  MaterialPageRoute(builder: (_) =&gt; CropScreen(imageFile: originalFile)),
+);
+
+<span class="comment">// ทำนายผล (Local vs API)</span>
+<span class="keyword">final</span> PredictionResult result = _useLocalModel
+    ? <span class="keyword">await</span> LocalPredictService.predictImage(croppedFile)
+    : <span class="keyword">await</span> ApiService.predictImage(croppedFile);
+
+<span class="comment">// แสดงผลลัพธ์</span>
+<span class="keyword">await</span> Navigator.push(context, ResultScreen(...));
+
+<span class="comment">// คลีนอัพรูป Temp เมื่อเสร็จสิ้น</span>
+_deleteTempFile(croppedFile);
+  </div>
+
+  <div class="info-box tip">
+    <div class="title">💡 เคล็ดลับ State Management</div>
+    เราส่งผู้ใช้ไปที่ <code>CropScreen</code> และใช้ <code>await Navigator.push(...)</code> เพื่อรอจนกว่าผู้ใช้จะกด "ยืนยัน" แล้วเราจะได้ไฟล์ที่ถูกครอบตัดกลับมาใช้งานต่อ!
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 9 ==================== -->
+<div class="chapter" id="ch9">
+  <h2>⭕ บทที่ 9 — หน้าจอ crop_screen.dart</h2>
+  <p><span class="file-tag">lib/screens/crop_screen.dart</span> คือหน้าสำหรับการครอบตัด (Crop) ภาพไข่แดงโดยเฉพาะ ใช้ <code>CustomPainter</code> และ <code>GestureDetector</code></p>
+
+  <h3>9.1 วงจรการครอบตัดอัตโนมัติ (Auto-Detect)</h3>
+  <p>ใน <code>initState</code> หน้าจอจะเริ่มตรวจจับด้วย <code>AutoCropService.detectYolk</code> เพื่อล็อกเป้าอัตโนมัติ หากสำเร็จ กรอบวงกลมจะวิ่งไปหาเป้าทันที</p>
+
+  <h3>9.2 การวาดและการลากกรอบ (Circle Mask)</h3>
+  <p>เรามี Handle 4 จุดรอบวงกลม (บน, ล่าง, ซ้าย, ขวา) เพื่อปรับขนาด ผู้ใช้ลากจุดเหล่านี้ได้ผ่าน <code>GestureDetector</code> ที่จับพิกัดจากการลากบนจอ (Pan Update)</p>
+
+  <h3>9.3 การขยายกรอบตามหลักเกณฑ์โมเดล (1.08x)</h3>
+  <p>เมื่อผู้ใช้ยืนยันการครอบตัด เราจะต้องครอบขยายออกไป 1.08 เท่าเหมือนกับตอนเทรนโมเดล</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="comment">// ขยายกรอบ 1.08x ให้ตรงกับโมเดล OpenCV</span>
+<span class="keyword">final</span> <span class="type">double</span> cropHalfSize = natRadius * <span class="number">1.08</span>;
+<span class="keyword">final</span> <span class="type">double</span> cropSize = cropHalfSize * <span class="number">2.0</span>;
+
+<span class="comment">// บังคับให้อยู่ในขอบเขตภาพ</span>
+cropX = cropX.clamp(<span class="number">0.0</span>, math.max(<span class="number">0.0</span>, imgW - cropSize));
+  </div>
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 10 ==================== -->
+<div class="chapter" id="ch10">
+  <h2>🏆 บทที่ 10 — หน้าจอ result_screen.dart</h2>
+  <p><span class="file-tag">lib/screens/result_screen.dart</span> หน้าที่ใช้แสดงคะแนน (1-15) โดยมี "Hero Score Card" เป็นไฮไลต์หลัก</p>
+
+  <p>ภายในหน้าประกอบด้วย:</p>
+  <ul>
+    <li><strong>Hero Card (Gradient Amber)</strong>: แสดงผลลัพธ์คะแนนใหญ่ ๆ และคะแนนดิบ</li>
+    <li><strong>RGB Card & CIELAB Card</strong>: แสดงตารางข้อมูลสีแต่ละแกนที่แปลงมา</li>
+    <li><strong>Color Attributes</strong>: โชว์ค่า Chroma (C*) และ Hue (h°)</li>
+  </ul>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 11 ==================== -->
+<div class="chapter" id="ch11">
+  <h2>🔍 บทที่ 11 — หน้าจอ detail_screen.dart</h2>
+  <p><span class="file-tag">lib/screens/detail_screen.dart</span> คือหน้าที่โชว์ข้อมูลลึกซึ้ง (Technical/Scientific Information)</p>
+  <p>ประกอบด้วย 5 ส่วนสำคัญ (สร้างด้วย <code>_buildCard</code>):</p>
+  <ol>
+    <li>ผลคะแนนพัดสีไข่แดง (DSM Fan Score) พร้อมค่าดิบ</li>
+    <li>ค่าเฉลี่ยสีปริภูมิ RGB (Mean RGB) - R, G, B</li>
+    <li>ค่าสีมาตรฐาน CIELAB (CIE 1976 D65) - L*, a*, b*</li>
+    <li>คุณลักษณะเชิงสี (Color Attributes) - Chroma, Hue Angle</li>
+    <li>คำอธิบายทางเทคนิค - ระบุการใช้ Center Circular Mask 42% + Support Vector Regression</li>
+  </ol>
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 12 ==================== -->
+<div class="chapter" id="ch12">
+  <h2>🧪 บทที่ 12 — Unit Tests</h2>
+  <p>ไฟล์เทสในโฟลเดอร์ <code>test/</code> ช่วยยืนยันว่าการคำนวณทั้งหมดถูกต้อง</p>
+
+  <h3>12.1 ตรวจสอบความถูกต้องของ CIELAB (yolk_detector_test.dart)</h3>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+test(<span class="string">'CIELAB matches CIE D65 reference'</span>, () {
+  <span class="comment">// เทียบกับ Python skimage.color.rgb2lab()</span>
+  <span class="keyword">final</span> lab = LocalPredictService.rgbToCielab(<span class="number">255.0</span>, <span class="number">180.0</span>, <span class="number">50.0</span>);
+  expect(lab[<span class="string">'l'</span>]!, closeTo(<span class="number">78.54</span>, <span class="number">0.1</span>));
+  expect(lab[<span class="string">'a'</span>]!, closeTo(<span class="number">16.93</span>, <span class="number">0.1</span>));
+  expect(lab[<span class="string">'b'</span>]!, closeTo(<span class="number">71.57</span>, <span class="number">0.1</span>));
+});
+  </div>
+
+  <h3>12.2 ยืนยันการทำงานร่วมกันบนเครื่องจริง (on_device_verification_test.dart)</h3>
+  <p>ตรวจสอบว่า <code>AutoCropService</code> และ <code>LocalPredictService</code> สามารถให้ผลลัพธ์เป็นคะแนนสมเหตุสมผลสำหรับไข่แดงสีจริง (เช่น class 15 ได้ผลลัพธ์ใกล้ 15)</p>
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 13 ==================== -->
+<div class="chapter" id="ch13">
+  <h2>🎯 บทที่ 13 — สรุปบทเรียน</h2>
+  <p>ยินดีด้วยครับ! คุณได้เห็นโค้ดทั้งหมดที่ขับเคลื่อนแอปทำนายสีไข่แดง:</p>
+
+  <ul>
+    <li>เรียนรู้ <strong>Dart & Flutter</strong> พื้นฐานผ่านการเปรียบเทียบกับ Python</li>
+    <li>เรียนรู้ <strong>Edge AI / On-Device ML</strong> ด้วยการแปลงโมเดล Scikit-Learn ให้ทำงานได้ด้วยคณิตศาสตร์พื้นฐานใน <code>local_predict_service.dart</code></li>
+    <li>เรียนรู้วิธีการทำ <strong>Computer Vision เบื้องต้น</strong> (Auto Crop, Circular Mask, Color Conversion) แบบ Native โดยไม่ต้องพึ่ง OpenCV</li>
+  </ul>
+
+  <div class="info-box tip">
+    <div class="title">🚀 Next Steps</div>
+    ตอนนี้คุณพร้อมที่จะนำแอปนี้ไปพัฒนาต่อ หรือปรับใช้โมเดล SVR/Machine Learning รูปแบบอื่น ๆ บน Flutter ได้อย่างมั่นใจแล้วครับ!
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+</div>
+
+<div class="footer">
+  Created with ❤️ by Thai Python Developer | Flutter Version
+</div>
+
+</body>
+</html>
