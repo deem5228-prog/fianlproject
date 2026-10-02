@@ -648,78 +648,285 @@ final response = await http.Response.fromStream(streamed);
 
 <!-- ==================== CHAPTER 7 ==================== -->
 <div class="chapter" id="ch7">
-  <h2>🎨 บทที่ 7 — หน้าจอ splash_screen.dart</h2>
-  <p><span class="file-tag">lib/screens/splash_screen.dart</span> คือหน้าแรกที่ผู้ใช้เห็น ออกแบบให้มี Yolk Logo สวยงาม และแสดง Mini DSM Scale</p>
+  <h2>🎨 บทที่ 7 — splash_screen.dart (หน้าจอโหลด)</h2>
+  <p><span class="file-tag">lib/screens/splash_screen.dart</span> คือหน้าแรกสุดที่ผู้ใช้เห็นเมื่อเปิดแอป ทำหน้าที่แสดงโลโก้แอปที่สวยงาม และทำการเปลี่ยนหน้า (Navigate) ไปยังหน้าหลัก</p>
+
+  <div class="info-box concept">
+    <div class="title">🧩 StatelessWidget กับ StatefulWidget</div>
+    ใน Flutter, <code>StatelessWidget</code> ใช้สำหรับหน้าจอที่ไม่มีการเปลี่ยนแปลงสถานะ (เช่น รูปคงที่) ส่วน <code>StatefulWidget</code> จะมี <code>initState()</code> สำหรับรันโค้ดเมื่อหน้าจอโหลด<br>
+    เพื่อให้แอปเปิดได้รวดเร็วที่สุด <code>SplashScreen</code> จึงถูกออกแบบเป็น <code>StatelessWidget</code> การโหลดโมเดลล่วงหน้า (Preloading) ด้วย <code>LocalPredictService.loadModel()</code> จึงถูกย้ายไปทำแบบ Lazy loading เมื่อผู้ใช้กดปุ่มทำนายแทน!
+  </div>
+
+  <h3>7.1 การวาด Yolk Logo ด้วย Stack</h3>
+  <p>ใน Flutter เราสร้างโลโก้ไข่โดยใช้ <code>Stack</code> เพื่อวางวงกลมซ้อนกันเป็นชั้นๆ (เหมือน Photoshop Layers)</p>
+
+  <div class="info-box concept">
+    <div class="title">🎨 BoxDecoration คืออะไร?</div>
+    เหมือนการใช้ CSS <code>border-radius</code>, <code>background-color</code> และ <code>border</code> มัดรวมกัน ใช้เพื่อตกแต่ง <code>Container</code> ให้สวยงาม
+  </div>
 
   <div class="code-block">
     <span class="lang">Dart</span>
-<span class="comment">// Yolk Logo (ไข่ขาว + ไข่แดง)</span>
-Stack(
-  alignment: Alignment.center,
-  children: [
-    <span class="comment">// ไข่ขาว</span>
-    Container(
-      width: <span class="number">150</span>, height: <span class="number">150</span>,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
+<span class="comment">// Stack ทำหน้าที่วาง widget ทับซ้อนกันจากหลังไปหน้า</span>
+<span class="type">SizedBox</span>(
+  width: <span class="number">168</span>, height: <span class="number">168</span>,
+  child: Stack(
+    alignment: <span class="type">Alignment</span>.center,
+    children: [
+      <span class="comment">// 1. วงแหวนเงา / จานรอง (ชั้นล่างสุด)</span>
+      <span class="type">Container</span>(
+        width: <span class="number">168</span>, height: <span class="number">168</span>,
+        decoration: <span class="keyword">const</span> <span class="type">BoxDecoration</span>(
+          shape: <span class="type">BoxShape</span>.circle,
+          color: <span class="type">Color</span>(<span class="number">0xFFE8DEC8</span>),
+        ),
       ),
-    ),
-    <span class="comment">// ไข่แดง</span>
-    Container(
-      width: <span class="number">80</span>, height: <span class="number">80</span>,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: _amber,
+      <span class="comment">// 2. ไข่ขาว (วงกลมสีขาวมีขอบสีเหลือง)</span>
+      <span class="type">Container</span>(
+        width: <span class="number">150</span>, height: <span class="number">150</span>,
+        decoration: <span class="type">BoxDecoration</span>(
+          shape: <span class="type">BoxShape</span>.circle,
+          color: <span class="type">Colors</span>.white,
+          border: <span class="type">Border</span>.all(color: <span class="keyword">const</span> <span class="type">Color</span>(<span class="number">0xFFFDE68A</span>), width: <span class="number">1.5</span>),
+        ),
       ),
-    ),
-  ],
+      <span class="comment">// 3. ไข่แดง (วงกลมสีส้ม)</span>
+      <span class="type">Container</span>(
+        width: <span class="number">80</span>, height: <span class="number">80</span>,
+        decoration: <span class="keyword">const</span> <span class="type">BoxDecoration</span>(
+          shape: <span class="type">BoxShape</span>.circle,
+          color: _amber,
+        ),
+      ),
+      <span class="comment">// 4. Highlight วาววับบนไข่แดง (ชั้นบนสุด)</span>
+      Positioned(
+        left: <span class="number">50</span>, top: <span class="number">50</span>,
+        child: <span class="type">Container</span>(
+          width: <span class="number">22</span>, height: <span class="number">14</span>,
+          decoration: <span class="type">BoxDecoration</span>(
+            color: <span class="keyword">const</span> <span class="type">Color</span>(<span class="number">0xFFFCD34D</span>),
+            borderRadius: <span class="type">BorderRadius</span>.circular(<span class="number">10</span>),
+          ),
+        ),
+      ),
+    ],
+  ),
 )
   </div>
+
+  <h3>7.2 Mini DSM Scale Bar (แถบสี 15 ระดับ)</h3>
+  <p>แถบสี DSM ด้านล่าง เกิดจากการนำ <code>Expanded</code> มาต่อกันใน <code>Row</code> (เพื่อให้แถบสีทั้ง 15 กล่องแบ่งพื้นที่เท่าๆ กัน)</p>
+
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="keyword">static</span> List&lt;<span class="type">Widget</span>&gt; _buildDsmStrip() {
+  <span class="keyword">const</span> colors = [
+    <span class="type">Color</span>(<span class="number">0xFFFFF9C4</span>), <span class="type">Color</span>(<span class="number">0xFFFFF59D</span>), <span class="type">Color</span>(<span class="number">0xFFFFF176</span>),
+    <span class="comment">// ... ไปจนถึงสีแดงเข้ม</span>
+    <span class="type">Color</span>(<span class="number">0xFF870000</span>), <span class="type">Color</span>(<span class="number">0xFF5D0000</span>), <span class="type">Color</span>(<span class="number">0xFF3E0000</span>),
+  ];
+  <span class="keyword">return</span> colors.map((c) =&gt; Expanded(
+    child: SizedBox.expand(child: ColoredBox(color: c)),
+  )).toList();
+}
+  </div>
+
+  <div class="info-box concept">
+    <div class="title">🧩 ClipRRect คืออะไร?</div>
+    ในโค้ดจะเห็นการห่อ <code>Row</code> ด้วย <code>ClipRRect</code> (Clip Rounded Rectangle) สิ่งนี้ทำหน้าที่ "ตัดขอบ" สิ่งที่อยู่ข้างในให้โค้งมนตามที่เรากำหนด หากไม่ใช้ กล่องสีซ้ายสุดและขวาสุดจะเป็นสี่เหลี่ยมมุมฉากที่ล้นออกมา
+  </div>
+
+  <h3>7.3 การนำทาง (Navigation)</h3>
+  <div class="compare-grid">
+    <div class="compare-card python">
+      <div class="header">🐍 Python (GUI Stack)</div>
+      <div class="body">
+<span class="comment"># ลบหน้าต่างเดิม แล้วเปิดหน้าต่างใหม่</span>
+stack.pop()
+stack.push(HomeScreen())
+      </div>
+    </div>
+    <div class="compare-card dart">
+      <div class="header">🎯 Dart (Navigator)</div>
+      <div class="body">
+Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (_) =&gt; const HomeScreen()
+  ),
+);
+      </div>
+    </div>
+  </div>
+  <p>ใน Flutter <code>Navigator</code> จัดการหน้าจอแบบ Stack เสมือนกองไพ่ การใช้ <code>pushReplacement</code> หมายถึงเปิดหน้า <code>HomeScreen</code> และลบทิ้ง <code>SplashScreen</code> ออกจากกอง (ทำให้ผู้ใช้กดปุ่มย้อนกลับกลับมาหน้าโลโก้ไม่ได้)</p>
+
   <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
 </div>
 
 <!-- ==================== CHAPTER 8 ==================== -->
 <div class="chapter" id="ch8">
-  <h2>🏠 บทที่ 8 — หน้าจอ home_screen.dart</h2>
-  <p><span class="file-tag">lib/screens/home_screen.dart</span> เป็นหน้าหลักที่ให้ผู้ใช้เลือกภาพ และยังสามารถสลับระหว่างการใช้ Local AI หรือ Backend API ได้</p>
+  <h2>🏠 บทที่ 8 — home_screen.dart (หน้าหลัก)</h2>
+  <p><span class="file-tag">lib/screens/home_screen.dart</span> เป็นหัวใจหลักในการรับภาพจากกล้อง/แกลเลอรี และสลับระหว่าง Local AI กับ API</p>
 
-  <h3>8.1 Design Tokens</h3>
-  <p>ในหน้าจอนี้มีการกำหนดสี Design Tokens ไว้อย่างชัดเจน:</p>
-  <ul>
-    <li><code>_amber</code>: <span style="color:#E8A020;">#E8A020</span> (สีหลัก)</li>
-    <li><code>_bg</code>: <span style="color:#FAF5EB; background-color:#333; padding:2px;">#FAF5EB</span> (พื้นหลัง)</li>
-    <li><code>_dark</code>: <span style="color:#1A1A1A;">#1A1A1A</span> (ตัวอักษร)</li>
-  </ul>
-
-  <h3>8.2 การทำนาย (_pickAndProcessImage)</h3>
+  <h3>8.1 Design Tokens (กำหนดสีธีมแอป)</h3>
+  <p>เรามีการกำหนดตัวแปรคงที่ (static const) ไว้เพื่อให้สีตรงกันและง่ายต่อการแก้ไข:</p>
   <div class="code-block">
     <span class="lang">Dart</span>
-<span class="comment">// เลือกรูปจาก Gallery/Camera</span>
-<span class="keyword">final</span> XFile? pickedFile = <span class="keyword">await</span> _picker.pickImage(source: source);
-<span class="keyword">if</span> (pickedFile == <span class="keyword">null</span>) <span class="keyword">return</span>;
-
-<span class="comment">// ส่งไปหน้า CropScreen แล้วรอรับไฟล์ครอปกลับมา</span>
-<span class="keyword">final</span> File? croppedFile = <span class="keyword">await</span> Navigator.push&lt;File?&gt;(
-  context,
-  MaterialPageRoute(builder: (_) =&gt; CropScreen(imageFile: originalFile)),
-);
-
-<span class="comment">// ทำนายผล (Local vs API)</span>
-<span class="keyword">final</span> PredictionResult result = _useLocalModel
-    ? <span class="keyword">await</span> LocalPredictService.predictImage(croppedFile)
-    : <span class="keyword">await</span> ApiService.predictImage(croppedFile);
-
-<span class="comment">// แสดงผลลัพธ์</span>
-<span class="keyword">await</span> Navigator.push(context, ResultScreen(...));
-
-<span class="comment">// คลีนอัพรูป Temp เมื่อเสร็จสิ้น</span>
-_deleteTempFile(croppedFile);
+<span class="comment">// 🎨 ชุดสีหลักของแอป</span>
+<span class="keyword">static</span> <span class="keyword">const</span> <span class="type">Color</span> _amber = <span class="type">Color</span>(<span class="number">0xFFE8A020</span>); <span class="comment">// 🟧 สีส้มไข่แดง (ปุ่ม/ไอคอน)</span>
+<span class="keyword">static</span> <span class="keyword">const</span> <span class="type">Color</span> _bg    = <span class="type">Color</span>(<span class="number">0xFFFAF5EB</span>); <span class="comment">// 🟨 สีครีมอุ่นเป็นพื้นหลัง</span>
+<span class="keyword">static</span> <span class="keyword">const</span> <span class="type">Color</span> _dark  = <span class="type">Color</span>(<span class="number">0xFF1A1A1A</span>); <span class="comment">// ⬛ สีเทาเข้มเกือบดำ สำหรับตัวอักษร</span>
   </div>
 
-  <div class="info-box tip">
-    <div class="title">💡 เคล็ดลับ State Management</div>
-    เราส่งผู้ใช้ไปที่ <code>CropScreen</code> และใช้ <code>await Navigator.push(...)</code> เพื่อรอจนกว่าผู้ใช้จะกด "ยืนยัน" แล้วเราจะได้ไฟล์ที่ถูกครอบตัดกลับมาใช้งานต่อ!
+  <h3>8.2 ฟังก์ชันรับภาพและคำนวณ (_pickAndProcessImage)</h3>
+  <p>นี่คือกระบวนการทั้งหมดตั้งแต่ผู้ใช้กดปุ่ม จนถึงโชว์ผลลัพธ์!</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+Future&lt;<span class="type">void</span>&gt; _pickAndProcessImage(<span class="type">ImageSource</span> source) <span class="keyword">async</span> {
+  <span class="comment">// 1. เรียกกล้อง หรือ แกลเลอรี (ImagePicker)</span>
+  <span class="keyword">final</span> XFile? pickedFile = <span class="keyword">await</span> _picker.pickImage(source: source);
+  <span class="keyword">if</span> (pickedFile == <span class="keyword">null</span>) <span class="keyword">return</span>;
+  
+  <span class="keyword">final</span> File originalFile = File(pickedFile.path);
+
+  <span class="comment">// 2. นำทางไป CropScreen และ *รอ* จนกว่าผู้ใช้จะกด "ยืนยัน"</span>
+  <span class="comment">// navigator จะได้ไฟล์ที่ถูกครอปกลับมา</span>
+  <span class="keyword">final</span> File? croppedFile = <span class="keyword">await</span> Navigator.push&lt;File?&gt;(
+    context,
+    MaterialPageRoute(builder: (_) =&gt; CropScreen(imageFile: originalFile)),
+  );
+  <span class="keyword">if</span> (croppedFile == <span class="keyword">null</span>) <span class="keyword">return</span>;
+
+  <span class="comment">// 3. แสดงหน้า Loading ด้วยการใช้ setState (ครอบตัวแปรที่เปลี่ยน)</span>
+  setState(() =&gt; _isLoading = <span class="keyword">true</span>);
+
+  <span class="comment">// 4. เลือกว่าจะใช้ Local AI หรือยิง API ไปเซิร์ฟเวอร์</span>
+  <span class="keyword">final</span> PredictionResult result = _useLocalModel
+      ? <span class="keyword">await</span> LocalPredictService.predictImage(croppedFile)
+      : <span class="keyword">await</span> ApiService.predictImage(croppedFile);
+
+  <span class="comment">// ซ่อนหน้า Loading</span>
+  setState(() =&gt; _isLoading = <span class="keyword">false</span>);
+
+  <span class="comment">// 5. ส่งผลลัพธ์พร้อมรูปภาพไปแสดงในหน้า ResultScreen </span>
+  <span class="comment">// และ *รอ* ผู้ใช้กดย้อนกลับจากหน้าแสดงผล</span>
+  <span class="keyword">await</span> Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) =&gt; ResultScreen(imageFile: croppedFile, result: result)),
+  );
+
+  <span class="comment">// 6. Cleanup! ลบไฟล์ภาพครอปชั่วคราวทิ้งทันทีที่ผู้ใช้กลับมาหน้าโฮม</span>
+  _deleteTempFile(croppedFile);
+}
+  </div>
+
+  <div class="info-box python">
+    <div class="title">🐍 การเรียก setState()</div>
+    ใน Python GUI (เช่น Tkinter) คุณมักจะใช้ <code>self.update()</code> แต่ใน Flutter เมื่อตัวแปรเปลี่ยนค่า (เช่น <code>_isLoading = true</code>) เราจะครอบด้วย <code>setState(() {...})</code> เพื่อสั่งให้ Flutter วาดหน้าจอ (build) ใหม่อีกครั้ง
+  </div>
+
+  <h3>8.3 Cleanup ลอจิก (_deleteTempFile)</h3>
+  <p>การจัดการพื้นที่ในมือถือเป็นสิ่งสำคัญ โค้ดนี้เช็คว่าไฟล์ยังมีอยู่หรือไม่ก่อนลบเงียบๆ ด้วย <code>.ignore()</code> เพื่อไม่ให้บล็อก UI</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="type">void</span> _deleteTempFile(<span class="type">File</span> file) {
+  file.exists().then((exists) {
+    <span class="keyword">if</span> (exists) file.delete().ignore();
+  }).ignore();
+}
+  </div>
+
+  <h3>8.4 การวางเลย์เอาต์หลัก (_buildBody) และ Spacer/Expanded</h3>
+  <p>เราใช้ <code>Column</code> เพื่อเรียงของจากบนลงล่าง และใช้ <code>Expanded</code> แทน Spacer ภายใน <code>IntrinsicHeight</code> เพื่อดันปุ่มกดลงไปอยู่ด้านล่างสุดเสมอไม่ว่าจอมือถือจะยาวแค่ไหน</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="type">Widget</span> _buildBody() {
+  <span class="keyword">return</span> SafeArea(
+    <span class="comment">// LayoutBuilder & SingleChildScrollView ทำให้เลื่อนจอได้ถ้าจอเล็ก</span>
+    child: LayoutBuilder(
+      builder: (context, constraints) =&gt; SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: IntrinsicHeight(
+            child: Column(
+              children: [
+                _buildYolkLogo(),
+                Text(<span class="string">'ระบบประเมินคะแนนพัดสีไข่แดง'</span>),
+                
+                <span class="comment">// ระยะห่างตายตัวด้วย SizedBox</span>
+                <span class="keyword">const</span> SizedBox(height: <span class="number">28</span>),
+                
+                _buildStepRow(<span class="string">'1.'</span>, <span class="string">'เลือกวิธีนำเข้าภาพ...'</span>),
+                _buildStepRow(<span class="string">'2.'</span>, <span class="string">'รอระบบวิเคราะห์'</span>),
+                _buildStepRow(<span class="string">'3.'</span>, <span class="string">'ปรากฏคะแนนสี'</span>),
+                
+                <span class="comment">// Expanded จะขยายดันเนื้อหาด้านล่างสุดให้ชิดขอบจอล่าง!</span>
+                <span class="keyword">const</span> Expanded(child: SizedBox(height: <span class="number">28</span>)),
+                
+                <span class="comment">// ปุ่มกดอยู่ล่างสุด</span>
+                _buildCameraButton(),
+                _buildGalleryButton(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+  </div>
+
+  <h3>8.5 สไตล์ของปุ่มต่างๆ</h3>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="comment">// ปุ่มถ่ายรูปด้วยกล้อง (ปุ่มทึบสี Amber)</span>
+ElevatedButton(
+  style: ElevatedButton.styleFrom(
+    backgroundColor: _amber,
+    foregroundColor: <span class="type">Colors</span>.white, <span class="comment">// สีของ Text และ Icon ข้างใน</span>
+    elevation: <span class="number">0</span>, <span class="comment">// ไม่เอาเงา</span>
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(<span class="number">16</span>)),
+  ),
+  onPressed: () =&gt; _pickAndProcessImage(ImageSource.camera),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [ <span class="type">Icon</span>(Icons.camera_alt_outlined), Text(<span class="string">'ถ่ายภาพด้วยกล้อง'</span>) ],
+  ),
+)
+
+<span class="comment">// ปุ่มเลือกจากคลัง (ปุ่มขอบเส้น OutlinedButton)</span>
+OutlinedButton(
+  style: OutlinedButton.styleFrom(
+    foregroundColor: _dark, <span class="comment">// ตัวหนังสือสีเข้ม</span>
+    backgroundColor: <span class="type">Colors</span>.white,
+    side: <span class="keyword">const</span> BorderSide(color: <span class="type">Color</span>(<span class="number">0xFFD1D5DB</span>)), <span class="comment">// เส้นขอบสีเทา</span>
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(<span class="number">16</span>)),
+  ),
+  onPressed: () =&gt; _pickAndProcessImage(ImageSource.gallery),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [ <span class="type">Icon</span>(Icons.photo_library_outlined), Text(<span class="string">'เลือกจากคลังรูปภาพ'</span>) ],
+  ),
+)
+  </div>
+
+  <h3>8.6 หน้าจอ Loading Overlay</h3>
+  <p>ใช้แพ็กเกจ <code>flutter_spinkit</code> สำหรับแอนิเมชันตอนกำลังรอผลลัพธ์</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="type">Widget</span> _buildLoading() {
+  <span class="keyword">return</span> Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        <span class="comment">// แอนิเมชันจุด 3 จุดเด้งดึ๋งสีส้ม</span>
+        <span class="keyword">const</span> SpinKitThreeBounce(color: _amber, size: <span class="number">40.0</span>),
+        <span class="keyword">const</span> SizedBox(height: <span class="number">24</span>),
+        Text(<span class="string">'กำลังสกัดค่าสีและทำนายผล...'</span>),
+      ],
+    ),
+  );
+}
   </div>
 
   <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
@@ -727,56 +934,347 @@ _deleteTempFile(croppedFile);
 
 <!-- ==================== CHAPTER 9 ==================== -->
 <div class="chapter" id="ch9">
-  <h2>⭕ บทที่ 9 — หน้าจอ crop_screen.dart</h2>
-  <p><span class="file-tag">lib/screens/crop_screen.dart</span> คือหน้าสำหรับการครอบตัด (Crop) ภาพไข่แดงโดยเฉพาะ ใช้ <code>CustomPainter</code> และ <code>GestureDetector</code></p>
+  <h2>⭕ บทที่ 9 — crop_screen.dart (ปรับแต่งกรอบครอป)</h2>
+  <p><span class="file-tag">lib/screens/crop_screen.dart</span> คือหน้าที่ซับซ้อนและน่าตื่นเต้นที่สุด! เป็นหน้าตาแบบ Custom Canvas ที่ให้ผู้ใช้เลื่อนวงกลม ปรับขนาดด้วยจุดจับลาก (Drag handles) เพื่อครอบเฉพาะส่วนไข่แดง</p>
 
-  <h3>9.1 วงจรการครอบตัดอัตโนมัติ (Auto-Detect)</h3>
-  <p>ใน <code>initState</code> หน้าจอจะเริ่มตรวจจับด้วย <code>AutoCropService.detectYolk</code> เพื่อล็อกเป้าอัตโนมัติ หากสำเร็จ กรอบวงกลมจะวิ่งไปหาเป้าทันที</p>
-
-  <h3>9.2 การวาดและการลากกรอบ (Circle Mask)</h3>
-  <p>เรามี Handle 4 จุดรอบวงกลม (บน, ล่าง, ซ้าย, ขวา) เพื่อปรับขนาด ผู้ใช้ลากจุดเหล่านี้ได้ผ่าน <code>GestureDetector</code> ที่จับพิกัดจากการลากบนจอ (Pan Update)</p>
-
-  <h3>9.3 การขยายกรอบตามหลักเกณฑ์โมเดล (1.08x)</h3>
-  <p>เมื่อผู้ใช้ยืนยันการครอบตัด เราจะต้องครอบขยายออกไป 1.08 เท่าเหมือนกับตอนเทรนโมเดล</p>
+  <h3>9.1 State Variables สำหรับจัดการวงกลม</h4>
   <div class="code-block">
     <span class="lang">Dart</span>
-<span class="comment">// ขยายกรอบ 1.08x ให้ตรงกับโมเดล OpenCV</span>
-<span class="keyword">final</span> <span class="type">double</span> cropHalfSize = natRadius * <span class="number">1.08</span>;
-<span class="keyword">final</span> <span class="type">double</span> cropSize = cropHalfSize * <span class="number">2.0</span>;
+<span class="comment">// ตำแหน่งจุดกึ่งกลางและรัศมีวงกลมบนหน้าจอ</span>
+<span class="type">double</span> _centerX = <span class="number">150.0</span>;  
+<span class="type">double</span> _centerY = <span class="number">150.0</span>;  
+<span class="type">double</span> _radius = <span class="number">80.0</span>;    
 
-<span class="comment">// บังคับให้อยู่ในขอบเขตภาพ</span>
-cropX = cropX.clamp(<span class="number">0.0</span>, math.max(<span class="number">0.0</span>, imgW - cropSize));
+<span class="comment">// _dragMode เก็บสถานะว่าผู้ใช้กำลังลากอะไรอยู่: </span>
+<span class="comment">// 'none', 'center', 'top', 'bottom', 'left', 'right'</span>
+<span class="type">String</span> _dragMode = <span class="string">'none'</span>; 
+<span class="type">Offset</span> _startTouch = Offset.zero; <span class="comment">// จุดเริ่มต้นตอนที่นิ้วแตะจอ</span>
+<span class="type">double</span> _startCx = <span class="number">0.0</span>;
+<span class="type">double</span> _startCy = <span class="number">0.0</span>;
+<span class="type">double</span> _startRadius = <span class="number">0.0</span>;
   </div>
+
+  <h3>9.2 การเรียก AutoCrop ตอนโหลดหน้าจอ (initState)</h3>
+  <p>ในฟังก์ชัน <code>_loadImage()</code> หน้าจอจะเริ่มโหลดภาพ และขนานกัน (Parallel) จะเรียกการตรวจจับไข่แดงอัตโนมัติ</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+Future&lt;<span class="type">void</span>&gt; _loadImage() <span class="keyword">async</span> {
+  <span class="keyword">final</span> bytes = <span class="keyword">await</span> widget.imageFile.readAsBytes();
+  <span class="keyword">final</span> codec = <span class="keyword">await</span> ui.instantiateImageCodec(bytes);
+  <span class="keyword">final</span> frame = <span class="keyword">await</span> codec.getNextFrame();
+
+  <span class="comment">// สั่งให้ On-Device Yolk Detection ทำงาน</span>
+  <span class="keyword">final</span> detected = <span class="keyword">await</span> AutoCropService.detectYolk(widget.imageFile);
+
+  setState(() {
+    _decodedImage = frame.image;
+    _detectedBox = detected;
+  });
+}
+  </div>
+
+  <h3>9.3 การรับ Event การลากนิ้ว (GestureDetector)</h3>
+  <div class="compare-grid">
+    <div class="compare-card python">
+      <div class="header">🐍 Python (Tkinter)</div>
+      <div class="body">
+canvas.bind("&lt;B1-Motion&gt;", on_drag)
+
+def on_drag(event):
+    x = event.x
+    y = event.y
+    # Update circle
+      </div>
+    </div>
+    <div class="compare-card dart">
+      <div class="header">🎯 Dart (GestureDetector)</div>
+      <div class="body">
+GestureDetector(
+  onPanStart: (details) {
+    _startTouch = details.globalPosition;
+  },
+  onPanUpdate: (details) {
+    <span class="comment">// dx, dy คือระยะที่นิ้วเลื่อนไป</span>
+    final dx = details.globalPosition.dx - _startTouch.dx;
+    setState(() { _centerX += dx; });
+  },
+)
+      </div>
+    </div>
+  </div>
+  <p>ตัวจัดการจุดจับขยายกรอบ 4 ด้าน ทำงานโดยครอบด้วย <code>GestureDetector</code> การคำนวณจะอิงว่าเราลากจุดไหน (เช่น ถ้าลากจุด 'top' รัศมี <code>_radius</code> จะขยายออกเมื่อลากขึ้น -dy)</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="comment">// โค้ดส่วนหนึ่งของ _buildHandle สำหรับ 4 จุดบนล่างซ้ายขวา</span>
+onPanUpdate: (details) {
+  <span class="keyword">if</span> (_dragMode == type) {
+    <span class="keyword">final</span> dx = details.globalPosition.dx - _startTouch.dx;
+    <span class="keyword">final</span> dy = details.globalPosition.dy - _startTouch.dy;
+
+    <span class="type">double</span> newR = _startRadius;
+    <span class="keyword">if</span> (type == <span class="string">'top'</span>) {
+      newR = _startRadius - dy; <span class="comment">// ลากขึ้น (dy ติดลบ) รัศมีกว้างขึ้น</span>
+    } <span class="keyword">else if</span> (type == <span class="string">'bottom'</span>) {
+      newR = _startRadius + dy;
+    } <span class="keyword">else if</span> (type == <span class="string">'left'</span>) {
+      newR = _startRadius - dx;
+    } <span class="keyword">else if</span> (type == <span class="string">'right'</span>) {
+      newR = _startRadius + dx;
+    }
+
+    <span class="comment">// .clamp ไว้ไม่ให้วงกลมล้นขอบจอหรือเล็กเกินไป</span>
+    <span class="keyword">final</span> clampedR = newR.clamp(<span class="number">30.0</span>, maxR);
+    setState(() =&gt; _radius = clampedR);
+  }
+}
+  </div>
+
+  <h3>9.4 การวาดรูปเอง (CustomPainter) </h3>
+  <p>การใช้ <code>CustomPainter</code> ใน Flutter เหมือนกับการใช้ <code>matplotlib</code> หรือ <code>canvas</code> ใน Python ที่เราเขียนโค้ดวาดเส้นหรือรูปทรงเรขาคณิตด้วย <code>paint(Canvas canvas, Size size)</code></p>
+  
+  <div class="info-box concept">
+    <div class="title">🧩 Path.combine ทำอะไร?</div>
+    ในระบบเราต้องการให้มีแผ่นกรองมืดๆ (Dark overlay) ทับภาพ แต่เว้น <strong>"รูทะลุตรงกลาง"</strong> ที่สว่างชัดเจน เราใช้ <code>Path.combine(PathOperation.difference, ... )</code> เพื่อเอาพื้นที่สี่เหลี่ยมทั้งจอ มาหักลบด้วยวงกลมตรงกลางออก
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="keyword">class</span> <span class="type">_CircleMaskPainter</span> <span class="keyword">extends</span> <span class="type">CustomPainter</span> {
+  @override
+  <span class="type">void</span> <span class="func">paint</span>(<span class="type">Canvas</span> canvas, <span class="type">Size</span> size) {
+    <span class="comment">// 1. สร้าง Path สีดำแบบเจาะรูวงกลมตรงกลาง!</span>
+    <span class="keyword">final</span> backgroundPath = Path()..addRect(Rect.fromLTWH(<span class="number">0</span>, <span class="number">0</span>, size.width, size.height));
+    <span class="keyword">final</span> circlePath = Path()..addOval(Rect.fromCircle(center: Offset(centerX, centerY), radius: radius));
+    
+    <span class="comment">// difference คือ สี่เหลี่ยมลบด้วยวงกลม</span>
+    <span class="keyword">final</span> maskPath = Path.combine(PathOperation.difference, backgroundPath, circlePath);
+    
+    <span class="keyword">final</span> darkPaint = Paint()..color = <span class="type">Color</span>(<span class="number">0xA6000000</span>)..style = PaintingStyle.fill;
+    canvas.drawPath(maskPath, darkPaint);
+
+    <span class="comment">// 2. วาดเส้นขอบวงกลมสีส้ม</span>
+    <span class="keyword">final</span> borderPaint = Paint()..color = <span class="type">Color</span>(<span class="number">0xFFE8A020</span>)..style = PaintingStyle.stroke..strokeWidth = <span class="number">2.5</span>;
+    canvas.drawCircle(Offset(centerX, centerY), radius, borderPaint);
+
+    <span class="comment">// 3. กากบาทศูนย์กลางวงกลม (Crosshair) </span>
+    <span class="comment">// ลากเส้นแนวนอน และ แนวตั้งตัดกันที่จุดศูนย์กลาง</span>
+    canvas.drawLine(Offset(centerX - <span class="number">10</span>, centerY), Offset(centerX + <span class="number">10</span>, centerY), borderPaint);
+    canvas.drawLine(Offset(centerX, centerY - <span class="number">10</span>), Offset(centerX, centerY + <span class="number">10</span>), borderPaint);
+  }
+}
+  </div>
+
+  <h3>9.5 การ Crop รูปจริงและขยาย 1.08x (_performCrop)</h3>
+  <p>เมื่อผู้ใช้กดยืนยัน โค้ดจะแปลงพิกัดวงกลมที่อยู่บน "หน้าจอ" (Display size) กลับไปเป็นพิกัดจริงของ "รูปภาพภาพต้นฉบับ" (Native size) และขยายขอบอีก 1.08 เท่าตามที่โมเดล OpenCV ร้องขอ</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+Future&lt;<span class="type">void</span>&gt; _confirmCrop() <span class="keyword">async</span> {
+  <span class="comment">// คำนวณสเกลของภาพต้นฉบับกับหน้าจอที่ถูกย่อมา</span>
+  <span class="keyword">final</span> <span class="type">double</span> scaleX = _decodedImage!.width / _dispW;
+  <span class="keyword">final</span> <span class="type">double</span> scaleY = _decodedImage!.height / _dispH;
+  <span class="keyword">final</span> <span class="type">double</span> scaleAvg = (scaleX + scaleY) / <span class="number">2.0</span>;
+
+  <span class="keyword">final</span> <span class="type">double</span> natCx = (_centerX - _dispL) * scaleX;
+  <span class="keyword">final</span> <span class="type">double</span> natCy = (_centerY - _dispT) * scaleY;
+  <span class="keyword">final</span> <span class="type">double</span> natRadius = _radius * scaleAvg;
+
+  <span class="comment">// ขยายกรอบ 1.08x ให้ตรงกับโมเดล OpenCV ตอนที่ทำการ Training</span>
+  <span class="keyword">final</span> <span class="type">double</span> cropHalfSize = natRadius * <span class="number">1.08</span>;
+  <span class="keyword">final</span> <span class="type">double</span> cropSize = cropHalfSize * <span class="number">2.0</span>;
+
+  <span class="comment">// ใช้ Canvas ตัดต่อภาพแล้ววาดเฉพาะสี่เหลี่ยมผืนผ้า (cropSize x cropSize) ลงบนแผ่นใหม่</span>
+  <span class="keyword">final</span> recorder = ui.PictureRecorder();
+  <span class="keyword">final</span> canvas = Canvas(recorder, Rect.fromLTWH(<span class="number">0</span>, <span class="number">0</span>, cropSize, cropSize));
+  
+  <span class="keyword">final</span> srcRect = Rect.fromLTWH(cropX, cropY, cropSize, cropSize); <span class="comment">// แหล่งที่มา (บนรูปเต็ม)</span>
+  <span class="keyword">final</span> dstRect = Rect.fromLTWH(<span class="number">0</span>, <span class="number">0</span>, cropSize, cropSize);         <span class="comment">// ปลายทาง (รูปใหม่เริ่มที่ 0,0)</span>
+
+  canvas.drawImageRect(_decodedImage!, srcRect, dstRect, Paint()..filterQuality = FilterQuality.high);
+  
+  <span class="comment">// แปลง Canvas ออกเป็นไฟล์ภาพ PNG บันทึกลงเครื่องและส่งกลับไปหน้า Home</span>
+  <span class="keyword">final</span> picture = recorder.endRecording();
+  <span class="keyword">final</span> croppedImg = <span class="keyword">await</span> picture.toImage(cropSize.toInt(), cropSize.toInt());
+  <span class="keyword">final</span> byteData = <span class="keyword">await</span> croppedImg.toByteData(format: ui.ImageByteFormat.png);
+  
+  <span class="keyword">final</span> file = File(<span class="string">'${tempDir.path}/cropped_yolk_123.png'</span>);
+  <span class="keyword">await</span> file.writeAsBytes(byteData.buffer.asUint8List());
+
+  Navigator.pop(context, file); <span class="comment">// คืนไฟล์กลับไปให้หน้าโฮม!</span>
+}
+  </div>
+
   <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
 </div>
 
 <!-- ==================== CHAPTER 10 ==================== -->
 <div class="chapter" id="ch10">
-  <h2>🏆 บทที่ 10 — หน้าจอ result_screen.dart</h2>
-  <p><span class="file-tag">lib/screens/result_screen.dart</span> หน้าที่ใช้แสดงคะแนน (1-15) โดยมี "Hero Score Card" เป็นไฮไลต์หลัก</p>
+  <h2>🏆 บทที่ 10 — result_screen.dart (หน้าผลลัพธ์)</h2>
+  <p><span class="file-tag">lib/screens/result_screen.dart</span> คือหน้าสำหรับโชว์คะแนนแบบอลังการ นำเสนอผลลัพธ์ที่คำนวณเสร็จแล้วจาก ML</p>
 
-  <p>ภายในหน้าประกอบด้วย:</p>
-  <ul>
-    <li><strong>Hero Card (Gradient Amber)</strong>: แสดงผลลัพธ์คะแนนใหญ่ ๆ และคะแนนดิบ</li>
-    <li><strong>RGB Card & CIELAB Card</strong>: แสดงตารางข้อมูลสีแต่ละแกนที่แปลงมา</li>
-    <li><strong>Color Attributes</strong>: โชว์ค่า Chroma (C*) และ Hue (h°)</li>
-  </ul>
+  <h3>10.1 Image Thumbnail (รูปขนาดเล็กด้านบน)</h3>
+  <div class="info-box concept">
+    <div class="title">🧩 ClipRRect คืออะไร?</div>
+    <code>ClipRRect</code> (Clip Rounded Rectangle) ใช้สำหรับตัดขอบวิดเจ็ตลูกให้มีความโค้งตามมุม (BorderRadius) หากไม่หุ้ม <code>Image.file</code> ด้วย <code>ClipRRect</code> รูปรถต้นฉบับที่เป็นสี่เหลี่ยมมุมฉากจะล้นทะลุกรอบที่เราทำ BorderRadius ไว้
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Dart</span>
+ClipRRect(
+  borderRadius: BorderRadius.circular(<span class="number">18</span>),
+  child: Image.file(
+    imageFile,
+    fit: BoxFit.cover,
+  ),
+)
+  </div>
+
+  <h3>10.2 Hero Score Card (กราเดียนต์สีอำพัน)</h3>
+  <p>การสร้างการ์ดที่ไล่สีและใช้เงาข้อความเพื่อให้โดดเด่นสะดุดตา</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="type">Container</span>(
+  decoration: <span class="type">BoxDecoration</span>(
+    <span class="comment">// LinearGradient ไล่สีจากมุมบนซ้ายลงล่างขวา</span>
+    gradient: <span class="keyword">const</span> LinearGradient(
+      colors: [_amber, <span class="type">Color</span>(<span class="number">0xFFF59E0B</span>)],
+      begin: <span class="type">Alignment</span>.topLeft,
+      end: <span class="type">Alignment</span>.bottomRight,
+    ),
+    borderRadius: BorderRadius.circular(<span class="number">20</span>),
+  ),
+  child: Column(
+    children: [
+      <span class="comment">// เลขคะแนนใหญ่ยักษ์! (ใส่เงา TextShadow เพื่อให้ลอยขึ้น)</span>
+      Text(
+        <span class="string">'${result.predictedScore}'</span>,
+        style: GoogleFonts.outfit(
+          fontSize: <span class="number">64</span>, fontWeight: FontWeight.bold, color: Colors.white,
+          shadows: <span class="keyword">const</span> [Shadow(color: <span class="type">Color</span>(<span class="number">0x40000000</span>), blurRadius: <span class="number">10</span>, offset: Offset(<span class="number">0</span>, <span class="number">4</span>))],
+        ),
+      ),
+      <span class="comment">// พื้นหลังสีดำโปร่งแสงรูปเม็ดยาสำหรับคะแนนดิบ (Raw Score Pill)</span>
+      Container(
+        padding: <span class="keyword">const</span> EdgeInsets.symmetric(horizontal: <span class="number">14</span>, vertical: <span class="number">6</span>),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(<span class="number">0.25</span>),
+          borderRadius: BorderRadius.circular(<span class="number">12</span>),
+        ),
+        child: Text(<span class="string">'คะแนนดิบ (Raw): ${result.rawScore}'</span>),
+      ),
+    ],
+  ),
+)
+  </div>
+
+  <h3>10.3 การแสดงค่า RGB / CIELAB ด้วยแถบสี (_buildColorRow)</h3>
+  <p>เรามีการแบ่ง Row ออกเป็น 2 <code>Expanded</code> กล่องซ้ายขวา (กล่องซ้ายโชว์ RGB | กล่องขวาโชว์ CIELAB) และใช้ Helper function วาดวงกลมสีเล็กๆ นำหน้าตัวหนังสือ</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="type">Widget</span> _buildColorRow(<span class="type">String</span> label, <span class="type">int</span> value, <span class="type">Color</span> dotColor) {
+  <span class="keyword">return</span> Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Row(
+        children: [
+          <span class="comment">// วาดจุดสีเล็กๆ หน้าข้อความ</span>
+          Container(
+            width: <span class="number">8</span>, height: <span class="number">8</span>,
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+          ),
+          SizedBox(width: <span class="number">6</span>),
+          Text(label), <span class="comment">// ชื่อสี (เช่น R, G, B, L*)</span>
+        ],
+      ),
+      <span class="comment">// ตัวเลขคะแนนสีด้านขวาสุด</span>
+      Text(<span class="string">'$value'</span>, style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+    ],
+  );
+}
+  </div>
+
+  <h3>10.4 Chroma และ Hue Angle</h3>
+  <p>ด้านล่างสุดของการ์ดผลลัพธ์ จะแสดงข้อมูล Chroma และ Hue Angle ในบรรทัดเดียวกัน โดยใช้ <code>Row</code> หุ้ม <code>Expanded</code> Container สีขาว 2 กล่องเพื่อกินพื้นที่คนละครึ่ง</p>
+
+  <h3>10.5 ปุ่มนำทาง (Navigation)</h3>
+  <p>ปุ่ม "ดูข้อมูลวิทยาศาสตร์และรายละเอียดเพิ่มเติม" เป็น <code>InkWell</code> ข้อความขีดเส้นใต้ ที่มี onTap ไปยังหน้า DetailScreen</p>
+  <p>ส่วนปุ่ม "กลับสู่หน้าหลัก" ใช้ <code>Navigator.pop(context)</code> เพื่อถอยกลับไปหน้าหลัก (เหมือน <code>stack.pop()</code> เด้งกลับไปยังหน้า Home)</p>
 
   <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
 </div>
 
 <!-- ==================== CHAPTER 11 ==================== -->
 <div class="chapter" id="ch11">
-  <h2>🔍 บทที่ 11 — หน้าจอ detail_screen.dart</h2>
-  <p><span class="file-tag">lib/screens/detail_screen.dart</span> คือหน้าที่โชว์ข้อมูลลึกซึ้ง (Technical/Scientific Information)</p>
-  <p>ประกอบด้วย 5 ส่วนสำคัญ (สร้างด้วย <code>_buildCard</code>):</p>
-  <ol>
-    <li>ผลคะแนนพัดสีไข่แดง (DSM Fan Score) พร้อมค่าดิบ</li>
-    <li>ค่าเฉลี่ยสีปริภูมิ RGB (Mean RGB) - R, G, B</li>
-    <li>ค่าสีมาตรฐาน CIELAB (CIE 1976 D65) - L*, a*, b*</li>
-    <li>คุณลักษณะเชิงสี (Color Attributes) - Chroma, Hue Angle</li>
-    <li>คำอธิบายทางเทคนิค - ระบุการใช้ Center Circular Mask 42% + Support Vector Regression</li>
-  </ol>
+  <h2>🔍 บทที่ 11 — detail_screen.dart (ข้อมูลวิชาการ)</h2>
+  <p><span class="file-tag">lib/screens/detail_screen.dart</span> คือหน้าที่โชว์ข้อมูลลึกซึ้ง (Technical/Scientific Information) แบบลิสต์การ์ดเรียงลงมา เพื่อให้ผู้วิจัยหรือนักวิชาการเข้าใจที่มาของตัวเลข</p>
+
+  <h3>11.1 โครงสร้างหน้าจอกับ _buildCard</h3>
+  <p>ทุกแถวข้อมูลถูกห่อหุ้มใน <code>_buildCard()</code> ซึ่งทำหน้าที่เหมือนเป็น <b>แม่แบบ (Template Wrapper)</b> รับพารามิเตอร์ ไอคอน, ชื่อหัวข้อ, และวิดเจ็ตเนื้อหา เพื่อสร้างการ์ดที่มีหน้าตาสม่ำเสมอ</p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="type">Widget</span> _buildCard({
+  <span class="keyword">required</span> <span class="type">IconData</span> icon,
+  <span class="keyword">required</span> <span class="type">Color</span> iconColor,
+  <span class="keyword">required</span> <span class="type">String</span> title,
+  <span class="keyword">required</span> <span class="type">Widget</span> child,
+}) {
+  <span class="keyword">return</span> Container(
+    padding: <span class="keyword">const</span> EdgeInsets.all(<span class="number">16</span>),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(<span class="number">16</span>),
+      border: Border.all(color: <span class="keyword">const</span> <span class="type">Color</span>(<span class="number">0xFFE5E7EB</span>)),
+    ),
+    child: Column(
+      children: [
+        <span class="comment">// ส่วนหัว (Icon + Title)</span>
+        Row(children: [ Icon(icon, color: iconColor), Text(title) ]),
+        <span class="keyword">const</span> SizedBox(height: <span class="number">12</span>),
+        <span class="comment">// เนื้อหาที่รับเข้ามา!</span>
+        child,
+      ],
+    ),
+  );
+}
+  </div>
+
+  <h3>11.2 การแสดงตัวเลข (Text-based Metric Rows)</h3>
+  <p>แทนที่จะใช้กราฟแท่งหรือไลบรารีกราฟที่ซับซ้อนและกินทรัพยากร โปรเจกต์นี้เลือกใช้รูปแบบ <strong>Text-based metric rows</strong> ที่เรียบง่ายแต่ทรงพลัง (<code>_buildMetricRow</code>) แสดงชื่อข้อความฝั่งซ้าย และตัวเลขสีเข้ม/สดฝั่งขวา</p>
+
+  <div class="code-block">
+    <span class="lang">Dart</span>
+<span class="comment">// ตัวอย่างการใช้ _buildCard ผสม _buildMetricRow กับ Divider คั่นบรรทัด</span>
+_buildCard(
+  icon: Icons.science_outlined,
+  iconColor: <span class="type">Color</span>(<span class="number">0xFF8B5CF6</span>),
+  title: <span class="string">'ค่าสีมาตรฐาน CIELAB (CIE 1976 D65)'</span>,
+  child: Column(
+    children: [
+      _buildMetricRow(<span class="string">'L* (ความสว่าง 0-100)'</span>, <span class="string">'${result.cielab.l.round()}'</span>, _dark),
+      <span class="keyword">const</span> Divider(height: <span class="number">16</span>, color: <span class="type">Color</span>(<span class="number">0xFFF3F4F6</span>)),
+      _buildMetricRow(<span class="string">'a* (แกนสีเขียว - แดง)'</span>, <span class="string">'${result.cielab.a.round()}'</span>, <span class="type">Color</span>(<span class="number">0xFFDC2626</span>)),
+      <span class="keyword">const</span> Divider(height: <span class="number">16</span>, color: <span class="type">Color</span>(<span class="number">0xFFF3F4F6</span>)),
+      _buildMetricRow(<span class="string">'b* (แกนน้ำเงิน - เหลือง)'</span>, <span class="string">'${result.cielab.b.round()}'</span>, <span class="type">Color</span>(<span class="number">0xFFD97706</span>)),
+    ],
+  ),
+),
+  </div>
+
+  <h3>11.3 คำอธิบายทางเทคนิค (Technical Explanation)</h3>
+  <p>กล่องการ์ดล่างสุดคือข้อมูลสำหรับนักวิจัย ซึ่งเป็นเพียงวิดเจ็ต <code>Text</code> วางอยู่ข้างใน <code>_buildCard</code></p>
+  <div class="code-block">
+    <span class="lang">Dart</span>
+_buildCard(
+  icon: Icons.info_outline,
+  iconColor: _gray,
+  title: <span class="string">'คำอธิบายทางเทคนิค'</span>,
+  child: Text(
+    <span class="string">'คะแนนระดับพัดสีไข่แดง (DSM Yolk Color Fan 1–15) ถูกประเมินด้วยโมเดล '</span>
+    <span class="string">'Support Vector Regression (SVR) แบบ RBF Kernel บนสมาร์ตโฟนโดยตรง (Edge AI) '</span>
+    <span class="string">'โดยสกัดค่าเฉลี่ยสีเฉพาะบริเวณกึ่งกลางวงกลม Center Circular Mask 42% ...'</span>
+  ),
+),
+  </div>
+
   <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
 </div>
 
@@ -811,6 +1309,7 @@ test(<span class="string">'CIELAB matches CIE D65 reference'</span>, () {
     <li>เรียนรู้ <strong>Dart & Flutter</strong> พื้นฐานผ่านการเปรียบเทียบกับ Python</li>
     <li>เรียนรู้ <strong>Edge AI / On-Device ML</strong> ด้วยการแปลงโมเดล Scikit-Learn ให้ทำงานได้ด้วยคณิตศาสตร์พื้นฐานใน <code>local_predict_service.dart</code></li>
     <li>เรียนรู้วิธีการทำ <strong>Computer Vision เบื้องต้น</strong> (Auto Crop, Circular Mask, Color Conversion) แบบ Native โดยไม่ต้องพึ่ง OpenCV</li>
+    <li>เจาะลึก <strong>หน้าจอ UI และ Custom Canvas</strong> ที่ทำให้ผู้ใช้สามารถโต้ตอบ ปรับขนาดวงกลม ได้อย่างลื่นไหลสมบูรณ์แบบ</li>
   </ul>
 
   <div class="info-box tip">
