@@ -787,23 +787,37 @@ cropped_img = img.crop((x1, y1, x1 + actual_size, y1 + actual_size))
   <h3>3.1 โค้ดหลัก — วนลูปทุกภาพ สกัดค่าสี</h3>
   <div class="code-block">
     <span class="lang">Python</span>
+features_data = []  <span class="comment"># ลิสต์เก็บข้อมูลภาพทั้งหมดก่อนแปลงเป็นตาราง</span>
+
 <span class="keyword">for</span> class_folder <span class="keyword">in</span> class_folders:       <span class="comment"># วนลูปทุกคลาส (class4-class15)</span>
-    fan_score = int(class_folder.replace(<span class="string">'class'</span>, <span class="string">''</span>))  <span class="comment"># "class10" → 10</span>
+    <span class="comment"># แกะตัวเลขคะแนนออกมาจากชื่อโฟลเดอร์ (เช่น "class10" → 10)</span>
+    fan_score = int(class_folder.replace(<span class="string">'class'</span>, <span class="string">''</span>))  
 
     <span class="keyword">for</span> img_name <span class="keyword">in</span> image_files:           <span class="comment"># วนลูปทุกรูปในคลาส</span>
         <span class="keyword">try</span>:
-            features = extract_color_features(img_path)  <span class="comment"># เรียก color_service</span>
+            <span class="comment"># โหลดภาพและสกัดค่าสีด้วย color_service</span>
+            features = extract_color_features(img_path)  
+            
+            <span class="comment"># บันทึกเป็น Dictionary เก็บไว้ในลิสต์</span>
             features_data.append({
-                <span class="string">'fan_score'</span>: fan_score,     <span class="comment"># ป้ายคำตอบ (4-15)</span>
-                <span class="string">'r'</span>: features[<span class="string">'r'</span>],          <span class="comment"># ค่าแดง</span>
-                <span class="string">'g'</span>: features[<span class="string">'g'</span>],          <span class="comment"># ค่าเขียว</span>
-                <span class="string">'b'</span>: features[<span class="string">'b'</span>],          <span class="comment"># ค่าน้ำเงิน</span>
-                <span class="string">'l'</span>: features[<span class="string">'l'</span>],          <span class="comment"># ความสว่าง</span>
-                <span class="string">'a'</span>: features[<span class="string">'a'</span>],          <span class="comment"># แกนแดง-เขียว</span>
-                <span class="string">'b_lab'</span>: features[<span class="string">'b_lab'</span>]  <span class="comment"># แกนเหลือง-น้ำเงิน</span>
+                <span class="string">'image_filename'</span>: img_name,  <span class="comment"># ชื่อไฟล์รูป (เพื่อการตรวจสอบกลับ)</span>
+                <span class="string">'fan_score'</span>: fan_score,      <span class="comment"># ป้ายคำตอบคะแนนไข่แดงจริง (4-15)</span>
+                <span class="string">'r'</span>: features[<span class="string">'r'</span>],          <span class="comment"># ค่าสีแดง (0-255)</span>
+                <span class="string">'g'</span>: features[<span class="string">'g'</span>],          <span class="comment"># ค่าสีเขียว (0-255)</span>
+                <span class="string">'b'</span>: features[<span class="string">'b'</span>],          <span class="comment"># ค่าสีน้ำเงิน (0-255)</span>
+                <span class="string">'l'</span>: features[<span class="string">'l'</span>],          <span class="comment"># ค่าความสว่าง L* (0-100)</span>
+                <span class="string">'a'</span>: features[<span class="string">'a'</span>],          <span class="comment"># แกนสีเขียว-แดง a*</span>
+                <span class="string">'b_lab'</span>: features[<span class="string">'b_lab'</span>]   <span class="comment"># แกนสีน้ำเงิน-เหลือง b*</span>
             })
-        <span class="keyword">except</span> Exception:
-            <span class="keyword">continue</span>  <span class="comment"># ข้ามรูปที่เสีย</span>
+        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+            <span class="keyword">print</span>(f<span class="string">"Skipping {img_name}: {e}"</span>)
+            <span class="keyword">continue</span>  <span class="comment"># ถ้ารูปเสีย (เช่น ครอปไม่ได้) ให้ข้ามรูปนั้นไปเลย</span>
+
+<span class="comment"># นำ List ของ Dictionary ทั้งหมดมาแปลงเป็นตาราง Pandas DataFrame</span>
+df = pd.DataFrame(features_data)
+
+<span class="comment"># บันทึกตารางทั้งหมดลงไฟล์ CSV (ไม่เอาเลข Index บรรทัดแรกสุด)</span>
+df.to_csv(<span class="string">'data/features.csv'</span>, index=<span class="keyword">False</span>)
   </div>
 
   <h3>3.2 ผลลัพธ์ — ไฟล์ features.csv</h3>
@@ -877,11 +891,29 @@ skf = StratifiedKFold(n_splits=<span class="number">5</span>, shuffle=<span clas
 
   <div class="code-block">
     <span class="lang">Python</span>
-<span class="comment"># ตัวอย่าง Pipeline ของ SVR</span>
-Pipeline([
-    (<span class="string">'scaler'</span>, StandardScaler()),                      <span class="comment"># ขั้นตอน 1: ปรับสเกล</span>
-    (<span class="string">'regressor'</span>, SVR(kernel=<span class="string">'rbf'</span>, C=<span class="number">10.0</span>, epsilon=<span class="number">0.1</span>))  <span class="comment"># ขั้นตอน 2: เรียนรู้</span>
-])
+<span class="comment"># ตัวอย่างการสร้าง Pipeline เพื่อรวมการ Scale และโมเดลเข้าด้วยกัน</span>
+models = {
+    <span class="string">'SVR (RBF Kernel)'</span>: Pipeline([
+        (<span class="string">'scaler'</span>, StandardScaler()),
+        (<span class="string">'regressor'</span>, SVR(kernel=<span class="string">'rbf'</span>, C=<span class="number">10.0</span>, epsilon=<span class="number">0.1</span>))
+    ]),
+    <span class="string">'Gradient Boosting'</span>: Pipeline([
+        (<span class="string">'scaler'</span>, StandardScaler()),
+        (<span class="string">'regressor'</span>, GradientBoostingRegressor(n_estimators=<span class="number">100</span>, learning_rate=<span class="number">0.1</span>, random_state=<span class="number">42</span>))
+    ]),
+    <span class="string">'Random Forest'</span>: Pipeline([
+        (<span class="string">'scaler'</span>, StandardScaler()),
+        (<span class="string">'regressor'</span>, RandomForestRegressor(n_estimators=<span class="number">100</span>, random_state=<span class="number">42</span>))
+    ]),
+    <span class="string">'Linear Regression'</span>: Pipeline([
+        (<span class="string">'scaler'</span>, StandardScaler()),
+        (<span class="string">'regressor'</span>, LinearRegression())
+    ]),
+    <span class="string">'Ridge Regression'</span>: Pipeline([
+        (<span class="string">'scaler'</span>, StandardScaler()),
+        (<span class="string">'regressor'</span>, Ridge(alpha=<span class="number">1.0</span>))
+    ])
+}
   </div>
 
   <h3>4.4 ตัววัดผล (Metrics) ที่ใช้</h3>
@@ -988,16 +1020,31 @@ weights_dict = {
 
   <div class="code-block">
     <span class="lang">Python</span>
-<span class="comment"># จำลองสมการ SVR ด้วยเลขบวกลบคูณหารล้วนๆ</span>
-scaled_x = (sample - scaler_mean) / scaler_scale  <span class="comment"># ปรับสเกล</span>
-dists = np.sum((sv_arr - scaled_x)**<span class="number">2</span>, axis=<span class="number">1</span>)  <span class="comment"># ระยะห่างยกกำลัง 2</span>
-k_vals = np.exp(-gamma * dists)                    <span class="comment"># RBF Kernel</span>
-result = np.sum(coef_arr * k_vals) + intercept     <span class="comment"># รวมผล</span>
+<span class="comment"># 1. เตรียมข้อมูลตัวแปรจาก weights_dict ให้เป็น NumPy Arrays</span>
+sv_arr = np.array(weights_dict[<span class="string">'support_vectors'</span>])   <span class="comment"># ขนาด (556, 6)</span>
+coef_arr = np.array(weights_dict[<span class="string">'dual_coef'</span>])       <span class="comment"># ขนาด (556,)</span>
+gamma = weights_dict[<span class="string">'gamma'</span>]
+intercept = weights_dict[<span class="string">'intercept'</span>]
+scaler_mean = np.array(weights_dict[<span class="string">'scaler_mean'</span>])
+scaler_scale = np.array(weights_dict[<span class="string">'scaler_scale'</span>])
 
-<span class="comment"># ผลลัพธ์:</span>
+<span class="comment"># 2. จำลองสมการ SVR ด้วยเลขบวกลบคูณหารล้วนๆ (เลียนแบบสิ่งที่จะไปเกิดใน Dart)</span>
+<span class="comment"># ปรับสเกลด้วย Z-Score</span>
+scaled_x = (sample - scaler_mean) / scaler_scale     <span class="comment"># ขนาด (1, 6)</span>
+
+<span class="comment"># หาระยะห่างแบบ Euclidean Distance ยยกกำลัง 2 กับ Support Vector ทุกจุด</span>
+dists = np.sum((sv_arr - scaled_x)**<span class="number">2</span>, axis=<span class="number">1</span>)       <span class="comment"># ผลลัพธ์: อาเรย์ขนาด (556,)</span>
+
+<span class="comment"># ประยุกต์ RBF Kernel Formula: exp(-gamma * ||x - x'||^2)</span>
+k_vals = np.exp(-gamma * dists)                      <span class="comment"># ผลลัพธ์: อาเรย์ขนาด (556,)</span>
+
+<span class="comment"># รวมผลคูณกับน้ำหนัก (dual_coef) และบวกด้วย bias (intercept)</span>
+pure_math_pred = np.sum(coef_arr * k_vals) + intercept     
+
+<span class="comment"># 3. ตรวจสอบผลลัพธ์ว่าตรงกับที่ Scikit-Learn ทำนายไหม</span>
 <span class="comment"># Scikit-Learn Output: 10.234567</span>
 <span class="comment"># Pure Math Output:    10.234567</span>
-<span class="comment"># Absolute Difference: 0.0e+00 (ตรงกัน 100%!)</span>
+<span class="comment"># Absolute Difference: 0.0000000 (ตรงกัน 100%!)</span>
   </div>
 
   <div class="step-header">
