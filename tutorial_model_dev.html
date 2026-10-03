@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บทเรียน: การพัฒนาโมเดล AI ทำนายสีไข่แดง (model_dev)</title>
+<style>
+  :root {
+    --primary: #E1740A;
+    --primary-light: #2A1A0F;
+    --primary-dark: #F59E0B;
+    --blue: #3B82F6;
+    --blue-light: rgba(37, 99, 235, 0.2);
+    --green: #10B981;
+    --green-light: rgba(5, 150, 105, 0.2);
+    --red: #EF4444;
+    --red-light: rgba(220, 38, 38, 0.2);
+    --purple: #8B5CF6;
+    --purple-light: rgba(124, 58, 237, 0.2);
+    --gray-50: #0D1117;
+    --gray-100: #161B22;
+    --gray-200: #30363D;
+    --gray-300: #484F58;
+    --gray-600: #8B949E;
+    --gray-700: #C9D1D9;
+    --gray-800: #E6EDF3;
+    --gray-900: #FFFFFF;
+    --code-bg: #1E1E2E;
+    --code-text: #CDD6F4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-800);
+    line-height: 1.8;
+  }
+
+  /* ===== HEADER ===== */
+  .hero {
+    background: linear-gradient(135deg, #7C2D12 0%, #C2410C 50%, #B45309 100%);
+    color: white;
+    padding: 60px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+    animation: float 15s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(30px, -30px); }
+  }
+  .hero h1 {
+    font-size: 2.8em;
+    margin-bottom: 10px;
+    position: relative;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+  .hero .subtitle {
+    font-size: 1.3em;
+    opacity: 0.95;
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .hero .badge {
+    display: inline-block;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 30px;
+    padding: 6px 20px;
+    margin-top: 15px;
+    font-size: 0.95em;
+    position: relative;
+  }
+
+  /* ===== NAVIGATION ===== */
+  .toc {
+    max-width: 1100px;
+    margin: -30px auto 30px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 30px 35px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 10;
+  }
+  .toc h2 {
+    font-size: 1.5em;
+    color: var(--primary-dark);
+    margin-bottom: 15px;
+    border-bottom: 3px solid var(--primary);
+    padding-bottom: 8px;
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 10px;
+  }
+  .toc a {
+    display: block;
+    padding: 10px 15px;
+    color: var(--gray-700);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+    font-size: 0.95em;
+  }
+  .toc a:hover {
+    background: var(--primary-light);
+    border-left-color: var(--primary);
+    color: var(--primary-dark);
+  }
+  .toc a .num {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    font-size: 0.8em;
+    margin-right: 8px;
+    font-weight: bold;
+  }
+
+  /* ===== MAIN CONTENT ===== */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+
+  /* ===== CHAPTER (section) ===== */
+  .chapter {
+    background: var(--gray-100);
+    border-radius: 16px;
+    padding: 35px 40px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    border: 1px solid var(--gray-200);
+  }
+  .chapter h2 {
+    font-size: 1.8em;
+    color: var(--primary-dark);
+    margin-bottom: 5px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--primary);
+  }
+  .chapter h3 {
+    font-size: 1.35em;
+    color: var(--blue);
+    margin: 25px 0 10px;
+    padding-left: 15px;
+    border-left: 4px solid var(--blue);
+  }
+  .chapter h4 {
+    font-size: 1.1em;
+    color: var(--gray-700);
+    margin: 18px 0 8px;
+  }
+
+  .file-tag {
+    display: inline-block;
+    background: #1C2128;
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.9em;
+    color: var(--primary-dark);
+    font-weight: 600;
+  }
+
+  /* ===== INFO BOXES ===== */
+  .info-box {
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 15px 0;
+    border-left: 5px solid;
+    font-size: 0.95em;
+  }
+  .info-box.concept {
+    background: var(--blue-light);
+    border-color: var(--blue);
+  }
+  .info-box.tip {
+    background: var(--green-light);
+    border-color: var(--green);
+  }
+  .info-box.warning {
+    background: var(--red-light);
+    border-color: var(--red);
+  }
+  .info-box.note {
+    background: var(--purple-light);
+    border-color: var(--purple);
+  }
+  .info-box .title {
+    font-weight: bold;
+    font-size: 1.05em;
+    margin-bottom: 5px;
+    color: var(--gray-800);
+  }
+
+  /* ===== CODE BLOCKS ===== */
+  .code-block {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: 10px;
+    padding: 20px 25px;
+    margin: 15px 0;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.88em;
+    line-height: 1.7;
+    position: relative;
+    border: 1px solid var(--gray-200);
+    white-space: pre;
+    word-wrap: break-word;
+  }
+  .code-block .lang {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: rgba(255,255,255,0.1);
+    color: #CDD6F4;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 0.8em;
+  }
+  .code-block .comment { color: #6C7086; font-style: italic; }
+  .code-block .keyword { color: #CBA6F7; }
+  .code-block .string { color: #A6E3A1; }
+  .code-block .func { color: #89B4FA; }
+  .code-block .number { color: #FAB387; }
+  .code-block .decorator { color: #F5C2E7; }
+  .code-block .builtin { color: #F9E2AF; }
+
+  code {
+    background: #1C2128;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.9em;
+    color: var(--primary-dark);
+    border: 1px solid var(--gray-200);
+  }
+
+  /* ===== FLOW DIAGRAMS ===== */
+  .flow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 25px 15px;
+    margin: 15px 0;
+    background: #161B22;
+    border-radius: 12px;
+    border: 1px solid var(--gray-200);
+  }
+  .flow-step {
+    background: #0D1117;
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    padding: 12px 18px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9em;
+    min-width: 140px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    color: var(--gray-800);
+  }
+  .flow-step .icon { font-size: 1.5em; display: block; margin-bottom: 4px; }
+  .flow-step small { display: block; font-weight: 400; color: var(--gray-600); font-size: 0.85em; }
+  .flow-arrow {
+    font-size: 1.8em;
+    color: var(--primary);
+    font-weight: bold;
+  }
+
+  /* ===== TABLES ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 0.92em;
+    border: 1px solid var(--gray-200);
+  }
+  th {
+    background: #7A3F05;
+    color: var(--gray-800);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  tr:nth-child(even) { background: #161B22; }
+  tr:nth-child(odd) { background: #1C2128; }
+  tr:hover { background: #1F2A37; }
+
+  /* ===== STEP INDICATOR ===== */
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 25px 0 15px;
+    padding: 15px 20px;
+    background: #1C2128;
+    border-radius: 10px;
+    border: 1px solid var(--gray-200);
+  }
+  .step-number {
+    width: 50px;
+    height: 50px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4em;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+  .step-header .step-info h3 {
+    margin: 0;
+    padding: 0;
+    border: none;
+    color: var(--primary-dark);
+    font-size: 1.2em;
+  }
+  .step-header .step-info p {
+    margin: 0;
+    color: var(--gray-600);
+    font-size: 0.92em;
+  }
+
+  /* ===== FORMULA BOX ===== */
+  .formula-box {
+    background: #1C2128;
+    border: 2px solid var(--purple);
+    border-radius: 12px;
+    padding: 20px 25px;
+    margin: 15px 0;
+    text-align: center;
+  }
+  .formula-box .formula {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: var(--purple);
+    margin: 8px 0;
+    font-family: 'Georgia', serif;
+  }
+  .formula-box .desc {
+    font-size: 0.9em;
+    color: var(--gray-600);
+  }
+
+  .back-to-top {
+    display: inline-block;
+    margin-top: 15px;
+    color: var(--primary-dark);
+    text-decoration: none;
+    font-size: 0.9em;
+  }
+  .back-to-top:hover { text-decoration: underline; }
+
+  .footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--gray-600);
+    font-size: 0.9em;
+    border-top: 1px solid var(--gray-200);
+    margin-top: 20px;
+    background: #0D1117;
+  }
+
+  /* ===== COMPARISON SECTION ===== */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 15px 0;
+  }
+  .compare-card {
+    border-radius: 10px;
+    padding: 18px 22px;
+    border: 2px solid var(--gray-200);
+    background: #1C2128;
+  }
+  .compare-card.left { border-color: var(--blue); }
+  .compare-card.right { border-color: var(--green); }
+  .compare-card h4 {
+    margin: 0 0 8px;
+    font-size: 1.05em;
+    color: var(--gray-800);
+  }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 1.8em; }
+    .chapter { padding: 20px; }
+    .toc-grid { grid-template-columns: 1fr; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .flow-diagram { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== HERO ==================== -->
+<div class="hero">
+  <h1>🥚 บทเรียน: การพัฒนาโมเดล AI ทำนายสีไข่แดง</h1>
+  <p class="subtitle">
+    เรียนรู้โค้ดทุกไฟล์ในโฟลเดอร์ <strong>model_dev/</strong> อย่างละเอียด<br>
+    ตั้งแต่การเตรียมข้อมูลภาพ สกัดสี เทรนโมเดล จนถึงส่งออกไปแอปมือถือ
+  </p>
+  <div class="badge">📂 17 ไฟล์ Python &nbsp;|&nbsp; 🧠 6 อัลกอริทึม ML &nbsp;|&nbsp; 📱 On-Device AI</div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="toc" id="toc">
+  <h2>📑 สารบัญ</h2>
+  <div class="toc-grid">
+    <a href="#ch0"><span class="num">0</span> ภาพรวมโปรเจกต์และ Pipeline ทั้งหมด</a>
+    <a href="#ch1"><span class="num">1</span> color_service.py — หัวใจการคำนวณสี</a>
+    <a href="#ch2"><span class="num">2</span> batch_auto_crop.py — ครอปภาพอัตโนมัติ</a>
+    <a href="#ch3"><span class="num">3</span> build_features.py — สกัดฟีเจอร์เป็นตาราง</a>
+    <a href="#ch4"><span class="num">4</span> train_compare_models.py — เทรนโมเดล ML</a>
+    <a href="#ch5"><span class="num">5</span> export_best_model.py — ส่งออกโมเดล</a>
+    <a href="#ch6"><span class="num">6</span> compare_crop_experiments.py — เปรียบเทียบ</a>
+    <a href="#ch7"><span class="num">7</span> ชุดทดสอบ A-D (Test Scripts)</a>
+    <a href="#ch8"><span class="num">8</span> stats_inspect.py — ตรวจสอบสถิติ</a>
+    <a href="#ch9"><span class="num">9</span> ไฟล์สร้างกราฟ (Visualization)</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ==================== CHAPTER 0 ==================== -->
+<div class="chapter" id="ch0">
+  <h2>📌 บทที่ 0 — ภาพรวมโปรเจกต์และ Pipeline ทั้งหมด</h2>
+
+  <div class="info-box concept">
+    <div class="title">🎯 เป้าหมายของโปรเจกต์</div>
+    สร้างระบบ AI ที่สามารถ <strong>"ดูรูปไข่แดง" แล้วบอกได้ว่าไข่แดงนี้สีระดับเท่าไหร่</strong> (คะแนน DSM Yolk Color Fan Score 1-15) โดยที่ AI ทำงานได้บนมือถือโดยไม่ต้องต่อเน็ต (On-Device / Edge AI)
+  </div>
+
+  <h3>🔄 Pipeline (ลำดับขั้นตอน) ของการพัฒนาโมเดล</h3>
+  <p>กระบวนการทั้งหมดแบ่งเป็น <strong>4 ขั้นตอนหลัก</strong> ที่ต้องทำตามลำดับ:</p>
+
+  <div class="flow-diagram">
+    <div class="flow-step">
+      <span class="icon">📷</span>
+      Step 1<br><strong>Auto Crop</strong>
+      <small>ครอปภาพไข่แดง</small>
+    </div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step">
+      <span class="icon">🎨</span>
+      Step 2<br><strong>Build Features</strong>
+      <small>สกัดค่าสี RGB/LAB</small>
+    </div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step">
+      <span class="icon">🤖</span>
+      Step 3<br><strong>Train Models</strong>
+      <small>เทรน 6 อัลกอริทึม</small>
+    </div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step">
+      <span class="icon">📦</span>
+      Step 4<br><strong>Export</strong>
+      <small>ส่งออกไปแอป/API</small>
+    </div>
+  </div>
+
+  <h3>📁 แผนผังไฟล์ทั้งหมดใน model_dev/</h3>
+  <table>
+    <tr><th>กลุ่ม</th><th>ไฟล์</th><th>หน้าที่</th></tr>
+    <tr><td rowspan="2">🔧 โมดูลกลาง</td><td><code>color_service.py</code></td><td>ฟังก์ชันคำนวณสี (ใช้ร่วมกันทุกไฟล์)</td></tr>
+    <tr><td><code>stats_inspect.py</code></td><td>ตรวจสอบสถิติข้อมูลดิบ</td></tr>
+    <tr><td rowspan="4">🏗️ Pipeline หลัก (4 ขั้นตอน)</td><td><code>batch_auto_crop.py</code></td><td>Step 1: ครอปภาพไข่แดงอัตโนมัติ</td></tr>
+    <tr><td><code>build_features.py</code></td><td>Step 2: สกัดค่าสีเป็นตาราง CSV</td></tr>
+    <tr><td><code>train_compare_models.py</code></td><td>Step 3: เทรนและเปรียบเทียบ ML</td></tr>
+    <tr><td><code>export_best_model.py</code></td><td>Step 4: ส่งออกโมเดลไปแอปมือถือ</td></tr>
+    <tr><td>🔬 การทดลอง</td><td><code>compare_crop_experiments.py</code></td><td>เปรียบเทียบภาพ ครอป vs ไม่ครอป</td></tr>
+    <tr><td rowspan="4">✅ ชุดทดสอบ</td><td><code>test_hsv_equivalence.py</code></td><td>Test A: ตรวจ HSV Mask ตรงกัน 100%</td></tr>
+    <tr><td><code>test_lab_equivalence.py</code></td><td>Test B: ตรวจ CIELAB ตรงกัน (diff&lt;0.001)</td></tr>
+    <tr><td><code>test_crop_consistency.py</code></td><td>Test C: ตรวจภาพครอปให้ผลเหมือนกัน</td></tr>
+    <tr><td><code>test_score_comparison.py</code></td><td>Test D: ตรวจคะแนนทำนายตรงกัน</td></tr>
+    <tr><td rowspan="5">📊 สร้างกราฟ</td><td><code>generate_plots.py</code></td><td>วาดกราฟ 4 รูป (Confusion Matrix ฯลฯ)</td></tr>
+    <tr><td><code>generate_feature_plots.py</code></td><td>วาดกราฟวิเคราะห์ฟีเจอร์สี 3 รูป</td></tr>
+    <tr><td><code>generate_all_plots.py</code></td><td>วาดกราฟรวมทั้งหมด 5 รูป</td></tr>
+    <tr><td><code>plot_real_svr_visual.py</code></td><td>วาด SVR Epsilon Tube</td></tr>
+    <tr><td><code>plot_detailed_tube_count.py</code></td><td>วาดแผนภูมิ SVR Tube Count</td></tr>
+  </table>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 1 ==================== -->
+<div class="chapter" id="ch1">
+  <h2>🎨 บทที่ 1 — color_service.py (หัวใจการคำนวณสี)</h2>
+  <p><span class="file-tag">color_service.py</span> เป็นไฟล์สำคัญที่สุดตัวหนึ่งของโปรเจกต์ เปรียบเสมือน <strong>"ห้องแล็บวิเคราะห์สี"</strong> ที่ไฟล์อื่นๆ ทุกตัวจะเรียกใช้ฟังก์ชันจากที่นี่</p>
+
+  <div class="info-box concept">
+    <div class="title">💡 ทำไมต้องมีไฟล์แยกเฉพาะเรื่องสี?</div>
+    เพราะในโปรเจกต์นี้ หลายไฟล์ต้องใช้ฟังก์ชัน "วัดค่าสี" เหมือนกัน (ทั้ง build_features.py, ทั้ง test scripts, ทั้ง egg_api) การรวมฟังก์ชันไว้ที่เดียวช่วยให้ไม่ต้องเขียนโค้ดซ้ำ และถ้าแก้ไขอะไรก็แก้ที่เดียวจบ
+  </div>
+
+  <h3>📦 Import — ไลบรารีที่ใช้</h3>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="keyword">import</span> io         <span class="comment"># อ่านข้อมูลไบนารี (รูปภาพจาก bytes)</span>
+<span class="keyword">import</span> os         <span class="comment"># จัดการไฟล์/โฟลเดอร์</span>
+<span class="keyword">import</span> cv2        <span class="comment"># OpenCV: ประมวลผลภาพ ตรวจจับไข่แดง</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np  <span class="comment"># จัดการตัวเลข/อาเรย์พิกเซล</span>
+<span class="keyword">from</span> PIL <span class="keyword">import</span> Image         <span class="comment"># จัดการรูปภาพ (เปิด/แปลง)</span>
+<span class="keyword">from</span> skimage.color <span class="keyword">import</span> rgb2lab  <span class="comment"># แปลงสี RGB → CIELAB</span>
+  </div>
+
+  <!-- ===== ColorFeatureList ===== -->
+  <h3>1.1 คลาส ColorFeatureList — กล่องเก็บค่าสีอัจฉริยะ</h3>
+  <p>คลาสนี้เก็บค่าสี 6 ค่า: <code>[R, G, B, L*, a*, b*]</code> ในรูปแบบ List ธรรมดา แต่เพิ่มความสามารถพิเศษคือ <strong>เรียกค่าได้ด้วยชื่อ</strong> เหมือน Dictionary</p>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="keyword">class</span> <span class="func">ColorFeatureList</span>(list):
+    <span class="comment"># แมปชื่อ → ตำแหน่ง index ในลิสต์</span>
+    _KEY_MAP = {
+        <span class="string">'r'</span>: <span class="number">0</span>, <span class="string">'g'</span>: <span class="number">1</span>, <span class="string">'b'</span>: <span class="number">2</span>,
+        <span class="string">'l'</span>: <span class="number">3</span>, <span class="string">'a'</span>: <span class="number">4</span>, <span class="string">'b_lab'</span>: <span class="number">5</span>,
+    }
+
+    <span class="keyword">def</span> <span class="func">__getitem__</span>(self, item):
+        <span class="keyword">if</span> isinstance(item, str):
+            <span class="keyword">return</span> super().__getitem__(self._KEY_MAP[item])
+        <span class="keyword">return</span> super().__getitem__(item)
+  </div>
+
+  <div class="info-box tip">
+    <div class="title">💡 วิธีใช้งาน</div>
+    <code>feats = ColorFeatureList([226, 131, 23, 64.2, 29.8, 65.9])</code><br>
+    เรียกด้วย index: <code>feats[0]</code> → 226 (ค่า R)<br>
+    เรียกด้วยชื่อ: <code>feats['r']</code> → 226 (ค่า R)<br>
+    เรียกด้วยชื่อ: <code>feats['b_lab']</code> → 65.9 (ค่า b* ในระบบสี CIELAB)
+  </div>
+
+  <!-- ===== auto_crop_yolk ===== -->
+  <h3>1.2 ฟังก์ชัน auto_crop_yolk() — ครอปไข่แดงด้วย OpenCV</h3>
+  <p>ฟังก์ชันนี้ทำหน้าที่ <strong>ตรวจจับตำแหน่งไข่แดง</strong> ในรูปภาพ แล้วตัดเฉพาะส่วนไข่แดงออกมาโดยอัตโนมัติ</p>
+
+  <div class="flow-diagram">
+    <div class="flow-step"><span class="icon">🖼️</span>รับภาพ<small>BGR/RGB/PIL/bytes</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">🌈</span>แปลง → HSV<small>BGR → HSV</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">🎭</span>สร้าง Mask<small>กรองสีเหลือง-ส้ม</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">🧹</span>ทำความสะอาด<small>Morphology</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">✂️</span>ครอป<small>วงกลม → สี่เหลี่ยม</small></div>
+  </div>
+
+  <h4>ขั้นตอนที่ 1: แปลงสี BGR → HSV</h4>
+  <div class="code-block">
+    <span class="lang">Python</span>
+hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+  </div>
+  <p>ภาพที่ OpenCV อ่านมาจะอยู่ในรูปแบบ BGR (น้ำเงิน-เขียว-แดง) เราต้องแปลงเป็น HSV (Hue-Saturation-Value) เพราะง่ายต่อการกรองสีตามช่วงสีที่ต้องการ</p>
+
+  <div class="info-box concept">
+    <div class="title">🌈 HSV คืออะไร?</div>
+    <strong>H (Hue)</strong> = เฉดสี (0-180 ในระบบ OpenCV) เช่น แดง=0, เขียว=60, น้ำเงิน=120<br>
+    <strong>S (Saturation)</strong> = ความเข้มสี (0=สีซีด, 255=สีจัด)<br>
+    <strong>V (Value)</strong> = ความสว่าง (0=มืด, 255=สว่าง)<br>
+    ไข่แดงจะมีสีในช่วง <strong>เหลือง-ส้ม</strong> → H อยู่ประมาณ 10-28 (ในสเกล OpenCV)
+  </div>
+
+  <h4>ขั้นตอนที่ 2: สร้าง Mask กรองเฉพาะสีไข่แดง</h4>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># กำหนดขอบเขตล่างและบนของสีไข่แดง</span>
+lower_hsv = np.array([<span class="number">10</span>, <span class="number">80</span>, <span class="number">80</span>])    <span class="comment"># Hue 10, Sat 80, Val 80</span>
+upper_hsv = np.array([<span class="number">28</span>, <span class="number">255</span>, <span class="number">250</span>])  <span class="comment"># Hue 28, Sat 255, Val 250</span>
+mask = cv2.inRange(hsv, lower_hsv, upper_hsv)
+  </div>
+  <p><code>cv2.inRange()</code> จะสร้าง "หน้ากาก" (Mask) ที่เป็นภาพขาว-ดำ: <strong>สีขาว = ไข่แดง</strong>, <strong>สีดำ = ไม่ใช่</strong></p>
+
+  <h4>ขั้นตอนที่ 3: ทำความสะอาด Mask (Morphological Operations)</h4>
+  <div class="code-block">
+    <span class="lang">Python</span>
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (<span class="number">7</span>, <span class="number">7</span>))
+mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)  <span class="comment"># อุดรูเล็กๆ</span>
+mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)   <span class="comment"># ลบจุดรบกวน</span>
+  </div>
+  <p><strong>Close</strong> = อุดรูเล็กๆ ที่อยู่ภายในไข่แดง, <strong>Open</strong> = ลบจุดเล็กๆ ที่ไม่ใช่ไข่แดง (เช่น สะท้อนแสง)</p>
+
+  <h4>ขั้นตอนที่ 4: หาวงกลมที่ล้อมไข่แดง แล้วครอปออกมา</h4>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># หาเส้นขอบ (Contour) ของไข่แดง</span>
+contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+largest_contour = max(contours, key=cv2.contourArea)
+
+<span class="comment"># หาวงกลมที่เล็กที่สุดที่ครอบไข่แดงได้พอดี</span>
+(cx, cy), radius = cv2.minEnclosingCircle(largest_contour)
+
+<span class="comment"># ตัดภาพเป็นสี่เหลี่ยมจตุรัส (ขยาย 8% จากรัศมี)</span>
+crop_size = radius * <span class="number">1.08</span>
+  </div>
+
+  <!-- ===== extract_mean_rgb ===== -->
+  <h3>1.3 ฟังก์ชัน extract_mean_rgb() — วัดค่าสีเฉลี่ย (Center Circular Mask 42%)</h3>
+  <p>ฟังก์ชันนี้คำนวณ <strong>ค่าสีเฉลี่ย R, G, B</strong> โดยใช้เฉพาะ <strong>พิกเซลตรงกลางภาพ</strong> ที่อยู่ในวงกลมรัศมี 42% ของภาพเท่านั้น</p>
+
+  <div class="info-box concept">
+    <div class="title">⭕ ทำไมต้องใช้วงกลมแค่ 42%?</div>
+    เพราะภาพไข่แดงที่ครอปมาแล้ว ขอบๆ ภาพอาจมีไข่ขาวหรือพื้นหลังปนอยู่ การใช้ Circular Mask จะทำให้เราอ่านสีเฉพาะ <strong>"เนื้อไข่แดงบริสุทธิ์"</strong> ตรงกลาง ไม่มีสีอื่นมาปนเปื้อน
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># กำหนดจุดศูนย์กลางและรัศมีวงกลม</span>
+cy, cx = h // <span class="number">2</span>, w // <span class="number">2</span>
+radius = int(min(h, w) * <span class="number">0.42</span>)  <span class="comment"># 42% ของด้านที่สั้นกว่า</span>
+
+<span class="comment"># สร้าง Mask วงกลม: True = อยู่ในวงกลม, False = อยู่นอก</span>
+y_coords, x_coords = np.ogrid[:h, :w]
+mask = (x_coords - cx)**<span class="number">2</span> + (y_coords - cy)**<span class="number">2</span> &lt;= radius**<span class="number">2</span>
+
+<span class="comment"># คำนวณค่าเฉลี่ย R, G, B เฉพาะพิกเซลในวงกลม</span>
+mean_r = float(np.mean(np_img[:, :, <span class="number">0</span>][mask]))
+mean_g = float(np.mean(np_img[:, :, <span class="number">1</span>][mask]))
+mean_b = float(np.mean(np_img[:, :, <span class="number">2</span>][mask]))
+  </div>
+  <p>สมการ <code>(x - cx)² + (y - cy)² ≤ r²</code> คือ <strong>สมการวงกลม</strong> พื้นฐานที่ตรวจว่าพิกเซลนั้นอยู่ในวงกลมหรือไม่</p>
+
+  <!-- ===== rgb_to_cielab ===== -->
+  <h3>1.4 ฟังก์ชัน rgb_to_cielab() — แปลง RGB เป็น CIELAB</h3>
+  <div class="info-box concept">
+    <div class="title">🔬 CIELAB คืออะไร?</div>
+    เป็นระบบสีมาตรฐานที่ออกแบบมาให้ <strong>ตรงกับการมองเห็นของมนุษย์</strong>:<br>
+    <strong>L*</strong> = ความสว่าง (0=ดำ, 100=ขาว)<br>
+    <strong>a*</strong> = แกนเขียว↔แดง (ค่าลบ=เขียว, ค่าบวก=แดง) — <em>ค่านี้สำคัญมากสำหรับไข่แดง!</em><br>
+    <strong>b*</strong> = แกนน้ำเงิน↔เหลือง (ค่าลบ=น้ำเงิน, ค่าบวก=เหลือง)
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="keyword">def</span> <span class="func">rgb_to_cielab</span>(r, g, b):
+    <span class="comment"># ปรับค่า 0-255 ให้เป็น 0-1</span>
+    rgb_norm = np.array([[[r / <span class="number">255.0</span>, g / <span class="number">255.0</span>, b / <span class="number">255.0</span>]]])
+    <span class="comment"># ใช้ scikit-image แปลงตามมาตรฐาน CIE D65</span>
+    lab_arr = rgb2lab(rgb_norm)[<span class="number">0</span>, <span class="number">0</span>]
+    <span class="keyword">return</span> {<span class="string">'l'</span>: lab_arr[<span class="number">0</span>], <span class="string">'a'</span>: lab_arr[<span class="number">1</span>], <span class="string">'b'</span>: lab_arr[<span class="number">2</span>]}
+  </div>
+
+  <!-- ===== extract_color_features ===== -->
+  <h3>1.5 ฟังก์ชัน extract_color_features() — รวมร่างทุกอย่าง</h3>
+  <p>ฟังก์ชันตัวหลักที่ <strong>ร้อยเรียงทุกอย่างเข้าด้วยกัน</strong>: รับภาพ → วัด RGB → แปลง CIELAB → คืนค่า 6 ตัว</p>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="keyword">def</span> <span class="func">extract_color_features</span>(image_input):
+    rgb = extract_mean_rgb(image_input)       <span class="comment"># ได้ R, G, B</span>
+    lab = rgb_to_cielab(rgb[<span class="string">'r'</span>], rgb[<span class="string">'g'</span>], rgb[<span class="string">'b'</span>])  <span class="comment"># ได้ L*, a*, b*</span>
+    <span class="keyword">return</span> ColorFeatureList([
+        rgb[<span class="string">'r'</span>], rgb[<span class="string">'g'</span>], rgb[<span class="string">'b'</span>],
+        lab[<span class="string">'l'</span>], lab[<span class="string">'a'</span>], lab[<span class="string">'b'</span>]
+    ])
+    <span class="comment"># ผลลัพธ์: [226.0, 131.0, 23.0, 64.2, 29.8, 65.9]</span>
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 2 ==================== -->
+<div class="chapter" id="ch2">
+  <h2>📷 บทที่ 2 — batch_auto_crop.py (ครอปภาพอัตโนมัติ)</h2>
+  <p><span class="file-tag">batch_auto_crop.py</span> เป็น <strong>Step 1 ของ Pipeline</strong> — ทำหน้าที่สแกนรูปภาพไข่แดงทั้งหมด 12 คลาส (class4 ถึง class15) แล้วครอปตัดเอาเฉพาะไข่แดงออกมาทีละรูปโดยอัตโนมัติ</p>
+
+  <div class="info-box note">
+    <div class="title">📝 ข้อสังเกต</div>
+    ไฟล์นี้ <strong>ไม่ได้ใช้ OpenCV</strong> ในการครอปภาพ แต่ใช้ <strong>scikit-image (skimage)</strong> แทน — แตกต่างจาก color_service.py ที่ใช้ OpenCV เพื่อให้ผลการครอปสอดคล้องกับฝั่งแอป Flutter (ที่ไม่มี OpenCV)
+  </div>
+
+  <h3>2.1 ฟังก์ชัน detect_and_crop_yolk() — หาไข่แดงแล้วครอป</h3>
+
+  <h4>ขั้นตอนที่ 1: แปลงสีเป็น HSV แบบ skimage</h4>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># อ่านภาพและแปลงเป็น HSV (skimage: H=0-360, S/V=0-1)</span>
+img = Image.open(image_path).convert(<span class="string">'RGB'</span>)
+arr = np.array(img)
+hsv = rgb2hsv(arr / <span class="number">255.0</span>)
+h, s, v = hsv[:,:,<span class="number">0</span>] * <span class="number">360.0</span>, hsv[:,:,<span class="number">1</span>], hsv[:,:,<span class="number">2</span>]
+  </div>
+
+  <h4>ขั้นตอนที่ 2: กรองเฉพาะสีไข่แดง</h4>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># เทียบเท่ากับ OpenCV: H=10-28 (×2→20-56), S≥80/255(≈0.314), V=80-250/255</span>
+mask = (
+    (h >= <span class="number">20.0</span>) & (h &lt;= <span class="number">56.0</span>) &    <span class="comment"># เฉดสีเหลือง-ส้ม</span>
+    (s >= <span class="number">0.314</span>) &                   <span class="comment"># ต้องมีสีเข้มพอ</span>
+    (v >= <span class="number">0.314</span>) & (v &lt;= <span class="number">0.980</span>)    <span class="comment"># ไม่มืดและไม่สว่างเกินไป</span>
+)
+  </div>
+
+  <h4>ขั้นตอนที่ 3: เลือก Blob ที่ใหญ่ที่สุด</h4>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="keyword">from</span> skimage.measure <span class="keyword">import</span> label, regionprops
+lbl = label(mask)                    <span class="comment"># จัดกลุ่มพิกเซลที่ติดกัน</span>
+props = regionprops(lbl)             <span class="comment"># วัดคุณสมบัติแต่ละกลุ่ม</span>
+largest = max(props, key=<span class="keyword">lambda</span> p: p.area)  <span class="comment"># เลือกกลุ่มที่ใหญ่สุด = ไข่แดง</span>
+  </div>
+  <p>ไข่แดงจะเป็น Blob (กลุ่มพิกเซล) ที่มีขนาดใหญ่ที่สุด ส่วน Blob เล็กๆ จะเป็นสัญญาณรบกวนที่เราไม่ต้องการ</p>
+
+  <h4>ขั้นตอนที่ 4: ครอปเป็นสี่เหลี่ยมจัตุรัส + สร้าง YOLO Label</h4>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># ตัดภาพเป็นสี่เหลี่ยมจัตุรัส โดยกึ่งกลางที่ centroid ของไข่แดง</span>
+box_size = int(max(bbox_w, bbox_h) * (<span class="number">1.0</span> + padding_ratio))
+cropped_img = img.crop((x1, y1, x1 + actual_size, y1 + actual_size))
+
+<span class="comment"># บันทึก Bounding Box ในรูปแบบ YOLO (เผื่อใช้ Deep Learning ในอนาคต)</span>
+<span class="comment"># "0 0.512 0.498 0.342 0.356" → คลาส 0 (ไข่แดง), ตำแหน่ง x,y,w,h แบบ normalize</span>
+  </div>
+
+  <h3>2.2 ฟังก์ชัน run_batch_auto_crop() — รันทีเดียวครอปทุกรูป</h3>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># วนลูปทุกโฟลเดอร์ class4, class5, ... , class15</span>
+<span class="keyword">for</span> class_name <span class="keyword">in</span> class_folders:
+    <span class="keyword">for</span> img_file <span class="keyword">in</span> images:
+        cropped_img, yolo_bbox = detect_and_crop_yolk(src_path)
+        cropped_img.save(out_img_path, quality=<span class="number">95</span>)
+
+<span class="comment"># ผลลัพธ์: สร้างโฟลเดอร์ data/auto_cropped_dataset/ ที่มีรูปครอปแล้วทุกใบ</span>
+  </div>
+
+  <div class="info-box tip">
+    <div class="title">🏃 วิธีรัน</div>
+    <code>python batch_auto_crop.py</code><br>
+    ระบบจะครอปรูปทั้งหมดและบันทึกลงโฟลเดอร์ <code>data/auto_cropped_dataset/</code> พร้อมไฟล์ YOLO label
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 3 ==================== -->
+<div class="chapter" id="ch3">
+  <h2>📊 บทที่ 3 — build_features.py (สกัดค่าสีเป็นตาราง)</h2>
+  <p><span class="file-tag">build_features.py</span> เป็น <strong>Step 2 ของ Pipeline</strong> — นำภาพที่ครอปแล้วจาก Step 1 มาวัดค่าสีทีละรูป แล้วบันทึกลงตาราง CSV</p>
+
+  <div class="flow-diagram">
+    <div class="flow-step"><span class="icon">📁</span>อ่านภาพครอป<small>data/auto_cropped_dataset/</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">🎨</span>extract_color_features<small>วัดสี R,G,B,L*,a*,b*</small></div>
+    <span class="flow-arrow">➜</span>
+    <div class="flow-step"><span class="icon">📄</span>บันทึก CSV<small>data/features.csv</small></div>
+  </div>
+
+  <h3>3.1 โค้ดหลัก — วนลูปทุกภาพ สกัดค่าสี</h3>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="keyword">for</span> class_folder <span class="keyword">in</span> class_folders:       <span class="comment"># วนลูปทุกคลาส (class4-class15)</span>
+    fan_score = int(class_folder.replace(<span class="string">'class'</span>, <span class="string">''</span>))  <span class="comment"># "class10" → 10</span>
+
+    <span class="keyword">for</span> img_name <span class="keyword">in</span> image_files:           <span class="comment"># วนลูปทุกรูปในคลาส</span>
+        <span class="keyword">try</span>:
+            features = extract_color_features(img_path)  <span class="comment"># เรียก color_service</span>
+            features_data.append({
+                <span class="string">'fan_score'</span>: fan_score,     <span class="comment"># ป้ายคำตอบ (4-15)</span>
+                <span class="string">'r'</span>: features[<span class="string">'r'</span>],          <span class="comment"># ค่าแดง</span>
+                <span class="string">'g'</span>: features[<span class="string">'g'</span>],          <span class="comment"># ค่าเขียว</span>
+                <span class="string">'b'</span>: features[<span class="string">'b'</span>],          <span class="comment"># ค่าน้ำเงิน</span>
+                <span class="string">'l'</span>: features[<span class="string">'l'</span>],          <span class="comment"># ความสว่าง</span>
+                <span class="string">'a'</span>: features[<span class="string">'a'</span>],          <span class="comment"># แกนแดง-เขียว</span>
+                <span class="string">'b_lab'</span>: features[<span class="string">'b_lab'</span>]  <span class="comment"># แกนเหลือง-น้ำเงิน</span>
+            })
+        <span class="keyword">except</span> Exception:
+            <span class="keyword">continue</span>  <span class="comment"># ข้ามรูปที่เสีย</span>
+  </div>
+
+  <h3>3.2 ผลลัพธ์ — ไฟล์ features.csv</h3>
+  <p>ไฟล์ CSV ที่ได้จะมีหน้าตาแบบนี้ (เหมือนตาราง Excel):</p>
+  <table>
+    <tr><th>image_filename</th><th>fan_score</th><th>r</th><th>g</th><th>b</th><th>l</th><th>a</th><th>b_lab</th></tr>
+    <tr><td>class4_001.jpg</td><td>4</td><td>243.5</td><td>215.2</td><td>88.7</td><td>87.4</td><td>2.1</td><td>64.8</td></tr>
+    <tr><td>class10_050.jpg</td><td>10</td><td>226.0</td><td>131.0</td><td>23.0</td><td>64.2</td><td>29.8</td><td>65.9</td></tr>
+    <tr><td>class15_030.jpg</td><td>15</td><td>195.3</td><td>85.1</td><td>12.5</td><td>48.6</td><td>38.7</td><td>55.2</td></tr>
+  </table>
+
+  <div class="info-box tip">
+    <div class="title">💡 ทำไมต้องแปลงเป็นตาราง?</div>
+    เพราะ <strong>โมเดล Machine Learning ไม่สามารถอ่านรูปภาพโดยตรงได้</strong> (ในโปรเจกต์นี้ใช้ ML แบบดั้งเดิม ไม่ใช่ Deep Learning) — โมเดลต้องการ "ตัวเลข" ที่บอกคุณลักษณะของภาพ ซึ่งก็คือค่าสี 6 ค่านี้นั่นเอง
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 4 ==================== -->
+<div class="chapter" id="ch4">
+  <h2>🤖 บทที่ 4 — train_compare_models.py (เทรนโมเดล ML)</h2>
+  <p><span class="file-tag">train_compare_models.py</span> เป็น <strong>Step 3 ของ Pipeline</strong> — หัวใจของ Machine Learning ที่นำข้อมูลจากตาราง CSV มาสอน AI หลายๆ อัลกอริทึมพร้อมกัน แล้วเปรียบเทียบว่าใครเก่งที่สุด</p>
+
+  <h3>4.1 อัลกอริทึม 5 ตัวที่แข่งขันกัน</h3>
+  <table>
+    <tr><th>โมเดล</th><th>ชื่อเต็ม</th><th>ลักษณะเด่น</th></tr>
+    <tr><td>🏆 <strong>SVR (RBF Kernel)</strong></td><td>Support Vector Regression</td><td>หาเส้นทำนายที่มี "ท่อ" (Epsilon Tube) ล้อมรอบ ยืดหยุ่นสูงด้วย RBF Kernel</td></tr>
+    <tr><td>Gradient Boosting</td><td>Gradient Boosting Regressor</td><td>สร้างต้นไม้เล็กๆ หลายต้นต่อกัน แต่ละต้นเรียนรู้จากข้อผิดพลาดของต้นก่อน</td></tr>
+    <tr><td>Random Forest</td><td>Random Forest Regressor</td><td>สร้างต้นไม้หลายต้นพร้อมกัน โหวตเอาคำตอบ</td></tr>
+    <tr><td>Linear Regression</td><td>สมการเส้นตรง</td><td>แบบง่ายที่สุด เหมาะกับข้อมูลที่เป็นเส้นตรง</td></tr>
+    <tr><td>Ridge Regression</td><td>สมการเส้นตรง + ลงโทษ</td><td>เหมือน Linear แต่เพิ่มการลงโทษเพื่อป้องกัน Overfitting</td></tr>
+  </table>
+
+  <h3>4.2 Stratified 5-Fold Cross-Validation คืออะไร?</h3>
+  <div class="info-box concept">
+    <div class="title">🔄 Cross-Validation แบบ Stratified</div>
+    <p>แทนที่จะแบ่งข้อมูลเป็น "ชุดเทรน" กับ "ชุดทดสอบ" แค่ครั้งเดียว เราแบ่งข้อมูลเป็น <strong>5 ส่วน (Fold)</strong> แล้ววนทดลอง 5 รอบ:</p>
+    <p>รอบ 1: ใช้ส่วน 1 ทดสอบ, ส่วน 2-5 เทรน<br>
+    รอบ 2: ใช้ส่วน 2 ทดสอบ, ส่วน 1,3-5 เทรน<br>
+    ... และต่อไปจนครบ 5 รอบ</p>
+    <p>คำว่า <strong>Stratified</strong> หมายถึงทุก Fold จะมีสัดส่วนของแต่ละคลาสเท่าๆ กัน (เช่น class4 มี 50 รูป ก็จะถูกแบ่งเป็น 10 รูปต่อ Fold) ทำให้ผลลัพธ์น่าเชื่อถือมากขึ้น</p>
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># ตั้งค่า Cross-Validation</span>
+skf = StratifiedKFold(n_splits=<span class="number">5</span>, shuffle=<span class="keyword">True</span>, random_state=<span class="number">42</span>)
+
+<span class="keyword">for</span> name, pipeline <span class="keyword">in</span> models.items():
+    <span class="keyword">for</span> train_idx, val_idx <span class="keyword">in</span> skf.split(X, y):
+        X_tr, y_tr = X[train_idx], y[train_idx]   <span class="comment"># ข้อมูลเทรน (80%)</span>
+        X_te, y_te = X[val_idx], y[val_idx]        <span class="comment"># ข้อมูลทดสอบ (20%)</span>
+
+        pipeline.fit(X_tr, y_tr)                    <span class="comment"># สอนโมเดล</span>
+        p_te = pipeline.predict(X_te)               <span class="comment"># ให้โมเดลทำนาย</span>
+
+        <span class="comment"># วัดผล</span>
+        te_r2.append(r2_score(y_te, p_te))          <span class="comment"># R² = ความแม่นยำรวม</span>
+        te_mae.append(mean_absolute_error(y_te, p_te))  <span class="comment"># MAE = ค่าผิดเฉลี่ย</span>
+  </div>
+
+  <h3>4.3 Pipeline คืออะไร?</h3>
+  <div class="info-box concept">
+    <div class="title">🔗 Pipeline = เชื่อมขั้นตอนเข้าด้วยกัน</div>
+    <code>Pipeline</code> ช่วยรวม <strong>2 ขั้นตอน</strong> เป็นหน่วยเดียว:<br>
+    1. <strong>StandardScaler</strong> → ปรับสเกลข้อมูล (ทำให้ทุกค่าสีมีค่าเฉลี่ย=0, ส่วนเบี่ยงเบน=1)<br>
+    2. <strong>SVR/RF/GB/LR/Ridge</strong> → อัลกอริทึม ML ที่เรียนรู้จริงๆ<br>
+    ข้อดีคือเวลาทำนาย ไม่ต้องกังวลว่าจะลืม Scale ข้อมูลก่อน
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># ตัวอย่าง Pipeline ของ SVR</span>
+Pipeline([
+    (<span class="string">'scaler'</span>, StandardScaler()),                      <span class="comment"># ขั้นตอน 1: ปรับสเกล</span>
+    (<span class="string">'regressor'</span>, SVR(kernel=<span class="string">'rbf'</span>, C=<span class="number">10.0</span>, epsilon=<span class="number">0.1</span>))  <span class="comment"># ขั้นตอน 2: เรียนรู้</span>
+])
+  </div>
+
+  <h3>4.4 ตัววัดผล (Metrics) ที่ใช้</h3>
+  <table>
+    <tr><th>ตัววัด</th><th>ความหมาย</th><th>ค่าที่ดี</th></tr>
+    <tr><td><strong>R² Score</strong></td><td>โมเดลอธิบายความผันแปรของข้อมูลได้กี่เปอร์เซ็นต์ (0-1)</td><td>ยิ่งสูงยิ่งดี (ใกล้ 1.0)</td></tr>
+    <tr><td><strong>MAE</strong></td><td>ค่าผิดพลาดเฉลี่ย (ทำนายผิดไปกี่ระดับโดยเฉลี่ย)</td><td>ยิ่งต่ำยิ่งดี (ใกล้ 0)</td></tr>
+    <tr><td><strong>RMSE</strong></td><td>เหมือน MAE แต่ลงโทษค่าผิดพลาดใหญ่ๆ หนักกว่า</td><td>ยิ่งต่ำยิ่งดี (ใกล้ 0)</td></tr>
+  </table>
+
+  <div class="info-box tip">
+    <div class="title">🏆 ผลลัพธ์: SVR ชนะ!</div>
+    SVR (RBF Kernel) ได้คะแนน Test R² = <strong>0.9185</strong> (แม่นยำ 91.85%) และ MAE = <strong>0.6403</strong> (ทำนายผิดเฉลี่ยแค่ 0.64 ระดับ) โดยมีความแม่นยำ ±1 ระดับ = <strong>92.7%</strong> — หมายความว่า 92.7% ของไข่ 647 ใบ ทำนายถูกหรือผิดไปแค่ 1 ระดับ!
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 5 ==================== -->
+<div class="chapter" id="ch5">
+  <h2>📦 บทที่ 5 — export_best_model.py (ส่งออกโมเดล)</h2>
+  <p><span class="file-tag">export_best_model.py</span> เป็น <strong>Step 4 สุดท้ายของ Pipeline</strong> — เป็นขั้นตอนที่ทำให้โมเดลที่เทรนเสร็จแล้ว "ออกจากห้องแล็บ" ไปทำงานจริงได้</p>
+
+  <h3>5.1 เทรนโมเดลบนข้อมูลทั้งหมด (Full Dataset)</h3>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># เทรน SVR ด้วยข้อมูลทั้ง 647 รูป (ไม่แบ่ง Test แล้ว เพราะผ่าน CV มาแล้ว)</span>
+best_pipeline = Pipeline([
+    (<span class="string">'scaler'</span>, StandardScaler()),
+    (<span class="string">'regressor'</span>, SVR(kernel=<span class="string">'rbf'</span>, C=<span class="number">10.0</span>, epsilon=<span class="number">0.1</span>))
+])
+best_pipeline.fit(X, y)  <span class="comment"># ใช้ข้อมูลทั้งหมดเพื่อให้ฉลาดสูงสุด</span>
+  </div>
+
+  <h3>5.2 ส่งออก 4 ไฟล์</h3>
+
+  <div class="step-header">
+    <div class="step-number">1</div>
+    <div class="step-info">
+      <h3>model.pkl → สำหรับใช้ใน Python</h3>
+      <p>เซฟทั้ง Pipeline (Scaler + SVR) ลงไฟล์ด้วย joblib</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <span class="lang">Python</span>
+joblib.dump(best_pipeline, <span class="string">'model.pkl'</span>)
+<span class="comment"># ไฟล์นี้โหลดกลับมาใช้ได้ทันที: pipeline = joblib.load('model.pkl')</span>
+  </div>
+
+  <div class="step-header">
+    <div class="step-number">2</div>
+    <div class="step-info">
+      <h3>model.pkl → คัดลอกไปให้ egg_api/</h3>
+      <p>เซิร์ฟเวอร์ FastAPI จะโหลดไฟล์นี้เพื่อให้บริการทำนายผ่าน API</p>
+    </div>
+  </div>
+
+  <div class="step-header">
+    <div class="step-number">3</div>
+    <div class="step-info">
+      <h3>model_weights.json → สำหรับแอปมือถือ (ตัวเอก!)</h3>
+      <p>แงะเอาตัวเลขคณิตศาสตร์ออกมาจาก SVR เก็บเป็น JSON ธรรมดา</p>
+    </div>
+  </div>
+
+  <div class="info-box concept">
+    <div class="title">🧮 ข้อมูลอะไรที่อยู่ใน model_weights.json?</div>
+    <p>ไฟล์นี้เก็บ <strong>"ความรู้ทั้งหมดของโมเดล SVR"</strong> ในรูปแบบตัวเลข:</p>
+    <ul>
+      <li><strong>scaler_mean / scaler_scale</strong> — ค่าเฉลี่ยและส่วนเบี่ยงเบนที่ใช้ปรับสเกลข้อมูล</li>
+      <li><strong>gamma</strong> — ค่าความ "แคบ/กว้าง" ของ RBF Kernel</li>
+      <li><strong>support_vectors</strong> — จุดอ้างอิง 556 จุด (จุดสำคัญที่ SVR จำไว้)</li>
+      <li><strong>dual_coef</strong> — น้ำหนักของแต่ละ Support Vector</li>
+      <li><strong>intercept</strong> — ค่าคงที่ (bias)</li>
+    </ul>
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># แงะพารามิเตอร์ออกมาจาก Pipeline</span>
+scaler = best_pipeline.named_steps[<span class="string">'scaler'</span>]
+svr = best_pipeline.named_steps[<span class="string">'regressor'</span>]
+
+weights_dict = {
+    <span class="string">'scaler_mean'</span>: list(scaler.mean_),
+    <span class="string">'scaler_scale'</span>: list(scaler.scale_),
+    <span class="string">'gamma'</span>: float(svr._gamma),
+    <span class="string">'intercept'</span>: float(svr.intercept_[<span class="number">0</span>]),
+    <span class="string">'dual_coef'</span>: list(svr.dual_coef_[<span class="number">0</span>]),
+    <span class="string">'support_vectors'</span>: [list(sv) <span class="keyword">for</span> sv <span class="keyword">in</span> svr.support_vectors_]
+}
+  </div>
+
+  <h3>5.3 Sanity Check — พิสูจน์ว่าสมการคณิตศาสตร์ให้ผลเหมือนกัน</h3>
+  <p>ก่อนจบ สคริปต์จะทดสอบว่า <strong>การคำนวณด้วยคณิตศาสตร์ล้วนๆ ให้คำตอบเดียวกันกับ scikit-learn</strong>:</p>
+
+  <div class="formula-box">
+    <div class="desc">สูตร SVR (RBF Kernel) ที่ฝั่งมือถือใช้คำนวณ:</div>
+    <div class="formula">f(x) = Σ αᵢ · exp(-γ · ‖x - svᵢ‖²) + b</div>
+    <div class="desc">
+      αᵢ = dual_coef[i], γ = gamma, svᵢ = support_vectors[i], b = intercept
+    </div>
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># จำลองสมการ SVR ด้วยเลขบวกลบคูณหารล้วนๆ</span>
+scaled_x = (sample - scaler_mean) / scaler_scale  <span class="comment"># ปรับสเกล</span>
+dists = np.sum((sv_arr - scaled_x)**<span class="number">2</span>, axis=<span class="number">1</span>)  <span class="comment"># ระยะห่างยกกำลัง 2</span>
+k_vals = np.exp(-gamma * dists)                    <span class="comment"># RBF Kernel</span>
+result = np.sum(coef_arr * k_vals) + intercept     <span class="comment"># รวมผล</span>
+
+<span class="comment"># ผลลัพธ์:</span>
+<span class="comment"># Scikit-Learn Output: 10.234567</span>
+<span class="comment"># Pure Math Output:    10.234567</span>
+<span class="comment"># Absolute Difference: 0.0e+00 (ตรงกัน 100%!)</span>
+  </div>
+
+  <div class="step-header">
+    <div class="step-number">4</div>
+    <div class="step-info">
+      <h3>model_weights.json → คัดลอกไปให้แอป Flutter</h3>
+      <p>คัดลอกไปวางที่ <code>egg_yolk_app/assets/model_weights.json</code> เพื่อฝังลงในแอปมือถือ</p>
+    </div>
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 6 ==================== -->
+<div class="chapter" id="ch6">
+  <h2>🔬 บทที่ 6 — compare_crop_experiments.py (การทดลอง A/B)</h2>
+  <p><span class="file-tag">compare_crop_experiments.py</span> เป็นสคริปต์สำหรับ <strong>พิสูจน์ทางวิทยาศาสตร์</strong> ว่าการครอปภาพอัตโนมัติ (Auto-Crop) ทำให้โมเดลแม่นยำขึ้นจริงหรือไม่</p>
+
+  <div class="compare-grid">
+    <div class="compare-card left">
+      <h4>🅰️ ชุดควบคุม (Original)</h4>
+      <p>ใช้ภาพดิบที่ไม่ได้ครอป อาจมีพื้นหลัง ไข่ขาว หรือวัตถุอื่นปนอยู่</p>
+      <p>ข้อมูลจาก: <code>features.csv</code></p>
+    </div>
+    <div class="compare-card right">
+      <h4>🅱️ ชุดทดลอง (Auto-Crop)</h4>
+      <p>ใช้ภาพที่ผ่านกระบวนการ Auto-Crop มาแล้ว เหลือแค่ไข่แดงล้วนๆ</p>
+      <p>ข้อมูลจาก: <code>features_autocrop.csv</code></p>
+    </div>
+  </div>
+
+  <p>สคริปต์จะเทรนโมเดลเดียวกัน 5 ตัว บนทั้ง 2 ชุดข้อมูล โดยใช้ <strong>Cross-Validation เดียวกัน (seed=42)</strong> แล้วเปรียบเทียบผลแบบตารางเคียงข้าง</p>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># เปรียบเทียบผลลัพธ์</span>
+diff_r2 = autocrop_r2 - original_r2
+winner = <span class="string">"Auto-Crop (Win)"</span> <span class="keyword">if</span> autocrop_r2 > original_r2 <span class="keyword">else</span> <span class="string">"Original (Win)"</span>
+  </div>
+
+  <div class="info-box tip">
+    <div class="title">💡 บทเรียนจากการทดลอง</div>
+    การทดลอง A/B แบบนี้เป็นสิ่งสำคัญมากในงาน Data Science — เราไม่ควรเดาว่าอะไรจะดีกว่า แต่ต้อง <strong>ทดลองและวัดผลด้วยตัวเลขจริงๆ</strong> เสมอ!
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 7 ==================== -->
+<div class="chapter" id="ch7">
+  <h2>✅ บทที่ 7 — ชุดทดสอบความถูกต้อง (Test Scripts A-D)</h2>
+  <p>ไฟล์ทดสอบ 4 ไฟล์นี้มีไว้ <strong>พิสูจน์ว่าโค้ดฝั่ง Dart (Flutter) ให้ผลลัพธ์เหมือนกับ Python 100%</strong> — เพื่อให้มั่นใจว่าแอปมือถือจะทำนายได้ถูกต้องเท่ากับเซิร์ฟเวอร์</p>
+
+  <!-- TEST A -->
+  <div class="step-header">
+    <div class="step-number">A</div>
+    <div class="step-info">
+      <h3>test_hsv_equivalence.py — ตรวจ HSV Mask</h3>
+      <p>เปรียบเทียบ Mask จาก OpenCV กับสูตรคณิตศาสตร์ล้วนๆ (เลียนแบบ Dart)</p>
+    </div>
+  </div>
+  <p><strong>สิ่งที่ทดสอบ:</strong> ให้ภาพเดียวกันผ่าน 2 วิธี แล้วเปรียบเทียบ Mask ทุกพิกเซล</p>
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># วิธีที่ 1: OpenCV (ของมาตรฐาน)</span>
+mask_cv = cv2.inRange(hsv_cv, lower, upper)
+
+<span class="comment"># วิธีที่ 2: สูตรคณิตศาสตร์ล้วนๆ (เลียนแบบ Dart บนมือถือ)</span>
+<span class="comment"># คำนวณ H, S, V ด้วย max/min ของ R, G, B</span>
+v = np.maximum(np.maximum(r, g), b)
+delta = v - np.minimum(np.minimum(r, g), b)
+<span class="comment"># ... (คำนวณ Hue จาก delta) ...</span>
+
+<span class="comment"># เปรียบเทียบ pixel ต่อ pixel</span>
+mismatch = total_pixels - np.sum(mask_cv == mask_dart)
+<span class="keyword">assert</span> mismatch == <span class="number">0</span>  <span class="comment"># ต้องตรงกัน 100%!</span>
+  </div>
+  <div class="info-box tip">
+    <div class="title">✓ ผลลัพธ์</div>
+    Mask ตรงกัน <strong>100.0%</strong> (413,280 / 413,280 พิกเซล, Mismatch = 0)
+  </div>
+
+  <!-- TEST B -->
+  <div class="step-header">
+    <div class="step-number">B</div>
+    <div class="step-info">
+      <h3>test_lab_equivalence.py — ตรวจ CIELAB</h3>
+      <p>เปรียบเทียบการแปลงสี RGB→CIELAB ระหว่าง scikit-image กับสูตร Dart</p>
+    </div>
+  </div>
+  <p><strong>สิ่งที่ทดสอบ:</strong> ใช้ตัวอย่างสี RGB 10 สี (ครอบคลุม Fan Score 1-15) แปลงเป็น L*, a*, b* ด้วยทั้ง 2 วิธี</p>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># สูตร Dart-mirror ทำแบบ step-by-step:</span>
+<span class="comment"># 1. sRGB gamma correction → Linear RGB</span>
+r_lin = ((r/255 + 0.055) / 1.055)**2.4  <span class="keyword">if</span> r/255 > 0.04045
+
+<span class="comment"># 2. Linear RGB → XYZ (เมทริกซ์ D65)</span>
+x = 0.412453 * r_lin + 0.357580 * g_lin + 0.180423 * b_lin
+
+<span class="comment"># 3. XYZ → CIELAB</span>
+L = 116 * f(y/yn) - 16
+a = 500 * (f(x/xn) - f(y/yn))
+b = 200 * (f(y/yn) - f(z/zn))
+  </div>
+  <div class="info-box tip">
+    <div class="title">✓ ผลลัพธ์</div>
+    ค่า L*, a*, b* ตรงกัน <strong>100%</strong> (diff < 0.001 ทุกสี)
+  </div>
+
+  <!-- TEST C -->
+  <div class="step-header">
+    <div class="step-number">C</div>
+    <div class="step-info">
+      <h3>test_crop_consistency.py — ตรวจภาพครอป</h3>
+      <p>ครอปภาพเดียวกันด้วย OpenCV vs Dart-mirror แล้วเปรียบเทียบค่าสี RGB เฉลี่ย</p>
+    </div>
+  </div>
+  <div class="info-box tip">
+    <div class="title">✓ ผลลัพธ์</div>
+    ค่า RGB ต่างกัน diff = <strong>0.0</strong> ทั้ง 5 ภาพ (ครอปได้ตำแหน่งเดียวกันเป๊ะ)
+  </div>
+
+  <!-- TEST D -->
+  <div class="step-header">
+    <div class="step-number">D</div>
+    <div class="step-info">
+      <h3>test_score_comparison.py — ตรวจคะแนนทำนาย (End-to-End)</h3>
+      <p>รันทั้ง Pipeline ตั้งแต่ครอป→วัดสี→ทำนายด้วยโมเดล แล้วเทียบคะแนน</p>
+    </div>
+  </div>
+  <p><strong>สิ่งที่ทดสอบ:</strong> ภาพ 20 รูป ผ่านกระบวนการทั้งหมดด้วย OpenCV pipeline และ Dart-mirror pipeline ต้องได้คะแนนทำนายต่างกันไม่เกิน 0.1</p>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># Pipeline 1: OpenCV crop → color features → SVR predict</span>
+cv_crop_img, _ = auto_crop_yolk(img_path)
+cv_feats = extract_color_features(cv_crop_img)
+score_cv = pipeline.predict(cv_vec)
+
+<span class="comment"># Pipeline 2: Dart-mirror crop → color features → SVR predict</span>
+dart_crop_img, _ = pure_dart_mirror_crop(img_path)
+dart_feats = extract_color_features(dart_crop_img)
+score_dart = pipeline.predict(dart_vec)
+
+<span class="comment"># เปรียบเทียบ</span>
+diff = abs(score_cv - score_dart)
+<span class="keyword">assert</span> diff &lt; <span class="number">0.1</span>
+  </div>
+  <div class="info-box tip">
+    <div class="title">✓ ผลลัพธ์</div>
+    คะแนนต่างกัน <strong>0.0</strong> ทั้ง 20 ภาพ — นั่นคือ <strong>แอปมือถือจะทำนายได้เหมือนกับเซิร์ฟเวอร์ 100%</strong>
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 8 ==================== -->
+<div class="chapter" id="ch8">
+  <h2>🔍 บทที่ 8 — stats_inspect.py (ตรวจสอบสถิติข้อมูลดิบ)</h2>
+  <p><span class="file-tag">stats_inspect.py</span> เป็นสคริปต์เล็กๆ ที่ใช้ <strong>สำรวจข้อมูลดิบก่อนเริ่ม Pipeline</strong> — ช่วยให้เราเข้าใจว่าข้อมูลหน้าตาเป็นยังไง ก่อนจะตัดสินใจเลือก Threshold หรือตั้งค่าต่างๆ</p>
+
+  <h3>สิ่งที่สคริปต์นี้ทำ</h3>
+  <ol>
+    <li>วนลูปทุกภาพในทุก Class (class4-class15)</li>
+    <li>ดูดค่า HSV ตรงกลางภาพ (บริเวณไข่แดง) เพื่อดู <strong>ช่วง Hue, Sat, Val ของไข่แดงจริง</strong></li>
+    <li>ดูดค่า Saturation ที่มุม 4 มุม (บริเวณพื้นหลัง) เพื่อดูว่า <strong>พื้นหลังมีค่า Saturation สูงแค่ไหน</strong></li>
+    <li>แสดงผลเป็นตารางสรุปทุกคลาส</li>
+  </ol>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># ดูค่า HSV ตรงกลาง (ไข่แดง)</span>
+r = min(H, W) // <span class="number">6</span>
+cyolk_s = s[cy-r:cy+r, cx-r:cx+r]  <span class="comment"># Saturation ตรงกลาง</span>
+cyolk_h = h[cy-r:cy+r, cx-r:cx+r]  <span class="comment"># Hue ตรงกลาง</span>
+
+<span class="comment"># ดูค่า Saturation ที่มุมภาพ (พื้นหลัง)</span>
+corner_bg = [s[<span class="number">0</span>:<span class="number">15</span>, <span class="number">0</span>:<span class="number">15</span>], s[<span class="number">0</span>:<span class="number">15</span>, -<span class="number">15</span>:], ...]
+  </div>
+
+  <div class="info-box concept">
+    <div class="title">💡 ทำไมต้องทำขั้นตอนนี้?</div>
+    เพราะค่า Threshold ที่ใช้ใน <code>auto_crop</code> (เช่น H=10-28, S≥80) ไม่ได้ถูกเดาขึ้นมา — แต่ถูก <strong>กำหนดจากผลการสำรวจข้อมูลจริง</strong> ด้วยสคริปต์นี้ เพื่อให้แน่ใจว่า Threshold ครอบคลุมไข่แดงทุกสีตั้งแต่เหลืองอ่อน (Score 4) ไปจนถึงแดงเข้ม (Score 15)
+  </div>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== CHAPTER 9 ==================== -->
+<div class="chapter" id="ch9">
+  <h2>📊 บทที่ 9 — ไฟล์สร้างกราฟ (Visualization Scripts)</h2>
+  <p>โปรเจกต์นี้มีไฟล์สร้างกราฟ 5 ไฟล์ ที่ผลิตกราฟสำหรับใส่ในรายงานวิจัย สไลด์นำเสนอ หรือเอกสารสรุป</p>
+
+  <!-- generate_plots.py -->
+  <h3>9.1 <span class="file-tag">generate_plots.py</span> — กราฟประเมินผลโมเดล (4 รูป)</h3>
+  <table>
+    <tr><th>กราฟ</th><th>คำอธิบาย</th><th>ไฟล์ผลลัพธ์</th></tr>
+    <tr><td>🟥 Confusion Matrix</td><td>ตารางแสดงว่าคลาสไหนถูกทำนายผิดเป็นคลาสไหน</td><td>confusion_matrix.png</td></tr>
+    <tr><td>🟠 Actual vs Predicted</td><td>กราฟจุดเปรียบเทียบคะแนนจริง vs คะแนนทำนาย</td><td>actual_vs_predicted.png</td></tr>
+    <tr><td>🟡 Residuals</td><td>ฮิสโตแกรมค่าผิดพลาด (ควรกระจุกที่ 0)</td><td>residuals_distribution.png</td></tr>
+    <tr><td>🟢 Model Comparison</td><td>แท่งเปรียบเทียบ R² ของทุกโมเดล</td><td>model_comparison_bar.png</td></tr>
+  </table>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># ตัวอย่างการวาด Confusion Matrix</span>
+cm = confusion_matrix(all_true_svr, all_rounded_svr, labels=classes)
+sns.heatmap(cm, annot=<span class="keyword">True</span>, fmt=<span class="string">'d'</span>, cmap=<span class="string">'YlOrRd'</span>)
+plt.savefig(<span class="string">'plots/confusion_matrix.png'</span>, dpi=<span class="number">300</span>)
+  </div>
+
+  <!-- generate_feature_plots.py -->
+  <h3>9.2 <span class="file-tag">generate_feature_plots.py</span> — กราฟวิเคราะห์ฟีเจอร์สี (3 รูป)</h3>
+  <table>
+    <tr><th>กราฟ</th><th>คำอธิบาย</th></tr>
+    <tr><td>🔵 Correlation Matrix</td><td>ตารางแสดงความสัมพันธ์ระหว่างค่าสีทุกคู่กับ Fan Score (ค่าใกล้ 1 หรือ -1 = สัมพันธ์สูง)</td></tr>
+    <tr><td>🟠 Feature Importance</td><td>แสดงว่าค่าสีตัวไหนสำคัญที่สุดสำหรับการทำนาย (ใช้เทคนิค Permutation Importance)</td></tr>
+    <tr><td>📈 Color Trends</td><td>กราฟเส้นแสดงแนวโน้ม L*, a*, b* เมื่อ Fan Score เปลี่ยนจาก 4 ไป 15</td></tr>
+  </table>
+
+  <div class="info-box concept">
+    <div class="title">🔬 Permutation Importance คืออะไร?</div>
+    เป็นเทคนิคที่ "สลับค่า" ของฟีเจอร์ทีละตัว แล้วดูว่าความแม่นยำลดลงมากแค่ไหน — ยิ่งลดมาก = ฟีเจอร์ตัวนั้นสำคัญมาก
+  </div>
+
+  <!-- generate_all_plots.py -->
+  <h3>9.3 <span class="file-tag">generate_all_plots.py</span> — กราฟรวมคุณภาพสูง (5 รูป)</h3>
+  <p>ไฟล์นี้รวมกราฟจาก 9.1 และ 9.2 มาเป็นเวอร์ชัน "สวยงาม" พร้อมเพิ่ม:</p>
+  <ul>
+    <li><strong>Per-Class MAE & RMSE</strong> — แสดงค่าผิดพลาดแยกรายคลาส (class 4 ถึง class 15) เพื่อดูว่าคลาสไหนทำนายยากที่สุด</li>
+    <li>กราฟทุกรูปมี <strong>Stats Box</strong> แสดงตัวเลขสำคัญบนกราฟเลย</li>
+  </ul>
+
+  <!-- SVR Visualization -->
+  <h3>9.4 <span class="file-tag">plot_real_svr_visual.py</span> + <span class="file-tag">plot_updated_svr_tube.py</span> — กราฟ SVR Epsilon Tube</h3>
+  <p>กราฟเหล่านี้เป็นไฮไลท์ของโปรเจกต์ — แสดงให้เห็นว่า <strong>SVR ทำงานอย่างไร</strong> ด้วยภาพจริง</p>
+
+  <div class="info-box concept">
+    <div class="title">📐 Epsilon Tube ของ SVR คืออะไร?</div>
+    <p>SVR จะพยายามหาเส้นทำนาย f(x) ที่มี <strong>"ท่อ" (Tube)</strong> ล้อมรอบ ±ε (ε = 0.1 ในโปรเจกต์นี้)</p>
+    <ul>
+      <li>จุดข้อมูลที่อยู่ <strong>ภายในท่อ</strong> → ไม่ถูกลงโทษ (SVR ถือว่าทำนายถูก)</li>
+      <li>จุดข้อมูลที่อยู่ <strong>นอกท่อ</strong> → ถูกลงโทษตามสัดส่วนระยะห่าง</li>
+      <li><strong>Support Vectors</strong> = จุดที่อยู่บนขอบท่อหรือนอกท่อ — เป็นจุดที่ SVR "จำ" ไว้เพื่อกำหนดรูปร่างของเส้นทำนาย</li>
+    </ul>
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Python</span>
+<span class="comment"># ใช้ฟีเจอร์ a* (Redness) แกนเดียว เพื่อวาดเป็น 2D ให้เข้าใจง่าย</span>
+X_a = df[[<span class="string">'a'</span>]].values  <span class="comment"># แกน X = ค่าความแดง</span>
+y = df[<span class="string">'fan_score'</span>].values  <span class="comment"># แกน Y = คะแนน Fan Score</span>
+
+<span class="comment"># วาดส่วนประกอบ 4 ชั้น:</span>
+<span class="comment"># 1. แถบสีเหลืองอ่อน = Epsilon Tube (±0.1)</span>
+plt.fill_between(x, y_pred - eps, y_pred + eps, color=<span class="string">'#FDE68A'</span>)
+<span class="comment"># 2. เส้นน้ำเงิน = เส้นทำนาย SVR</span>
+plt.plot(x, y_pred, color=<span class="string">'#1D4ED8'</span>, linewidth=<span class="number">3</span>)
+<span class="comment"># 3. จุดส้ม = ตัวอย่างไข่แดงทั้งหมด</span>
+plt.scatter(X_a, y, color=<span class="string">'#F97316'</span>)
+<span class="comment"># 4. จุดเขียว = Support Vectors</span>
+plt.scatter(sv_x, sv_y, color=<span class="string">'#10B981'</span>)
+  </div>
+
+  <!-- plot_detailed_tube_count.py -->
+  <h3>9.5 <span class="file-tag">plot_detailed_tube_count.py</span> — แยกนับจุดใน/นอก Tube</h3>
+  <p>สคริปต์นี้วาดภาพ 2 แผง:</p>
+  <ul>
+    <li><strong>แผงซ้าย:</strong> ซูมเข้าดูจุด 120 จุด แสดง "ลำต้น" (stem) ของจุดที่อยู่นอก Tube</li>
+    <li><strong>แผงขวา:</strong> แผนภูมิวงกลม (Pie Chart) แสดงสัดส่วนจุดที่อยู่ในท่อ vs นอกท่อ</li>
+  </ul>
+
+  <a href="#toc" class="back-to-top">⬆ กลับไปสารบัญ</a>
+</div>
+
+<!-- ==================== SUMMARY ==================== -->
+<div class="chapter">
+  <h2>🎓 สรุปบทเรียน</h2>
+
+  <h3>สิ่งที่ได้เรียนรู้จากโค้ดทั้ง 17 ไฟล์</h3>
+  <table>
+    <tr><th>หัวข้อ</th><th>สิ่งที่ได้เรียน</th></tr>
+    <tr><td>Computer Vision</td><td>ใช้ HSV Color Space ในการตรวจจับวัตถุตามสี, Morphological Operations, Contour Detection</td></tr>
+    <tr><td>Color Science</td><td>ระบบสี RGB, HSV, CIELAB, CIE D65, sRGB Gamma Correction</td></tr>
+    <tr><td>Data Engineering</td><td>การสกัดฟีเจอร์จากภาพ (Feature Extraction), Circular Masking, การสร้าง CSV</td></tr>
+    <tr><td>Machine Learning</td><td>SVR, Random Forest, Gradient Boosting, Cross-Validation, StandardScaler, Pipeline</td></tr>
+    <tr><td>Model Deployment</td><td>การส่งออกโมเดลเป็น .pkl (Server) และ .json (Mobile), Sanity Check</td></tr>
+    <tr><td>Scientific Method</td><td>A/B Testing, Unit Testing (Test A-D), Permutation Feature Importance</td></tr>
+    <tr><td>Visualization</td><td>Confusion Matrix, Scatter Plot, Residuals, Heatmap, SVR Epsilon Tube</td></tr>
+    <tr><td>Edge AI</td><td>การนำโมเดลจากเซิร์ฟเวอร์ไปรันบนมือถือด้วยสมการคณิตศาสตร์ล้วนๆ</td></tr>
+  </table>
+
+  <div class="info-box tip">
+    <div class="title">🚀 ขั้นตอนถัดไป</div>
+    หลังจากเข้าใจส่วน <code>model_dev/</code> แล้ว คุณสามารถศึกษาต่อได้ที่:<br>
+    • <strong>egg_api/</strong> — ดูว่า FastAPI นำ model.pkl ไปให้บริการอย่างไร<br>
+    • <strong>egg_yolk_app/</strong> — ดูว่า Flutter ใช้ model_weights.json คำนวณบนมือถืออย่างไร
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <p>📚 บทเรียนนี้สร้างจากการวิเคราะห์โค้ดจริงทั้ง 17 ไฟล์ใน model_dev/ ของโปรเจกต์ Egg Yolk Color Prediction</p>
+  <p>สร้างโดย AI Assistant | Egg Yolk DSM Fan Score Prediction Project</p>
+</div>
+
+</body>
+</html>
